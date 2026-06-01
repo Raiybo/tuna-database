@@ -1,0 +1,9 @@
+{
+  "_comment": "YOUR personal fishing marks. Replace the placeholder offshore points with your REAL GPS marks (drop-offs, reefs, wrecks, spots where you've caught fish). 'type' can be: departure, dropoff, reef, wreck, structure, spot. The system ranks these by today's conditions. The more accurate these are, the better the 'where' becomes.",
+  "home": { "name": "Marina Dbaye", "lat": 33.928, "lon": 35.585 },
+  "spots": [
+    { "name": "Drop-off NW (placeholder)", "lat": 33.945, "lon": 35.545, "type": "dropoff", "depth_m": 120, "notes": "Edit to your real drop-off mark" },
+    { "name": "Drop-off W (placeholder)",  "lat": 33.925, "lon": 35.540, "type": "dropoff", "depth_m": 150, "notes": "Edit to your real drop-off mark" },
+    { "name": "Deep break SW (placeholder)", "lat": 33.900, "lon": 35.535, "type": "structure", "depth_m": 200, "notes": "Edit to your real mark" }
+  ]
+}
