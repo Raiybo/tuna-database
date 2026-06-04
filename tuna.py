@@ -12,6 +12,7 @@ Output:  report.html  (open it on your phone before you leave the dock)
 import json
 import math
 import os
+import time
 import urllib.request
 import urllib.parse
 from datetime import datetime, timedelta
@@ -84,10 +85,21 @@ def build_grid(home_lat, home_lon):
 # ----------------------------------------------------------------------------
 # HTTP / data
 # ----------------------------------------------------------------------------
-def fetch_json(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "tuna-forecast/1.0"})
-    with urllib.request.urlopen(req, timeout=45) as r:
-        return json.loads(r.read().decode("utf-8"))
+def fetch_json(url, attempts=4):
+    """Fetch with retry/backoff - public weather servers throw transient
+    502 / SSL-EOF errors and one blip shouldn't crash the morning report."""
+    last = None
+    for i in range(attempts):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "tuna-forecast/1.0"})
+            with urllib.request.urlopen(req, timeout=45) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except Exception as e:
+            last = e
+            if i < attempts - 1:
+                print(f"  network hiccup ({type(e).__name__}), retrying in {2*(i+1)}s ...")
+                time.sleep(2 * (i + 1))
+    raise last
 
 
 def fetch_weather(lat, lon):
