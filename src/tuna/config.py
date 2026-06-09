@@ -50,8 +50,8 @@ CHL_BANDS = (
     (0.60, 1.50, 0.70),
 )
 CHL_FLOOR = 0.40          # >= 1.5: murky / post-bloom
-CHL_ENABLED = False       # no verified live free feed today; flip on when one is wired (see sources/chlorophyll.py)
-CHL_MAX_AGE_DAYS = 30     # ignore composites older than this even if returned
+CHL_ENABLED = True        # live: NOAA OceanWatch S-NPP VIIRS chlorophyll (see sources/chlorophyll.py)
+CHL_MAX_AGE_DAYS = 21     # VIIRS NRT chl lags ~1-2 weeks; ignore anything older
 
 # --- thermal-break ("front") heuristic across the spot field ---
 FRONT_MIN_SPREAD = 0.5
