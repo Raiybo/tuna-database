@@ -1,6 +1,6 @@
 # Tuna day sheet - 2026-06-09T14:45 (Asia/Beirut)
 
-**From Marina Baye (assumed: Dbayeh)** (33.935, 35.590, range 40 km)
+**From Marina Baye, Dbayeh** (33.935, 35.590, range 40 km)
 
 ## VERDICT: GO - 9-16 km/h WSW wind, 0.3-0.4 m swell, water 25.0 C
 
@@ -12,7 +12,7 @@
 | Pressure | 1010.3 hPa, steady (-0.3/3h) |
 | Current | ~1.0 km/h |
 | Moon | Last Quarter, 33% |
-| Solunar majors | 07:56 / 19:56 (approx) |
+| Solunar majors | 07:57 / 19:57 (approx) |
 
 ## Where to go (within range, best first)
 
