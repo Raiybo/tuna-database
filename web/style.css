@@ -1,0 +1,79 @@
+:root {
+  --prime: #1a9850;
+  --good: #91cf60;
+  --fair: #fdae61;
+  --poor: #d73027;
+  --bg: #0b1f2a;
+  --panel: #112c3a;
+  --ink: #e8f1f5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  padding: 12px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid #1d3f50;
+}
+
+header h1 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+header h1 span { font-weight: 400; opacity: 0.7; font-size: 0.85rem; }
+#status { font-size: 0.8rem; opacity: 0.8; margin-top: 4px; }
+
+#app { flex: 1; display: flex; min-height: 0; }
+
+#panel {
+  width: 340px;
+  background: var(--panel);
+  padding: 14px;
+  overflow-y: auto;
+  border-right: 1px solid #1d3f50;
+}
+
+#map { flex: 1; }
+
+.legend { display: flex; gap: 12px; font-size: 0.8rem; margin-bottom: 10px; flex-wrap: wrap; }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.dot.prime { background: var(--prime); }
+.dot.good { background: var(--good); }
+.dot.fair { background: var(--fair); }
+.dot.poor { background: var(--poor); }
+
+#refresh {
+  width: 100%; padding: 8px; margin-bottom: 12px;
+  background: #1d3f50; color: var(--ink); border: 1px solid #2c5468;
+  border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+}
+#refresh:hover { background: #265064; }
+
+#ranking { list-style: none; margin: 0; padding: 0; }
+#ranking li {
+  padding: 10px; margin-bottom: 8px; border-radius: 8px;
+  background: #0e2632; border-left: 4px solid #2c5468; cursor: pointer;
+}
+#ranking li:hover { background: #143241; }
+#ranking li.prime { border-left-color: var(--prime); }
+#ranking li.good { border-left-color: var(--good); }
+#ranking li.fair { border-left-color: var(--fair); }
+#ranking li.poor { border-left-color: var(--poor); }
+.rk-head { display: flex; justify-content: space-between; align-items: baseline; }
+.rk-name { font-weight: 600; }
+.rk-rating { font-size: 0.7rem; letter-spacing: 0.05em; opacity: 0.85; }
+.rk-meta { font-size: 0.8rem; opacity: 0.85; margin-top: 3px; }
+.rk-coords { font-size: 0.72rem; opacity: 0.6; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+.note { font-size: 0.72rem; opacity: 0.65; line-height: 1.5; margin-top: 16px; }
+.note a { color: #7fc8e8; }
+
+.leaflet-popup-content { font-size: 0.82rem; line-height: 1.4; }
