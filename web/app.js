@@ -1,132 +1,256 @@
-/* Tuna - client-side bluefin casting dashboard.
- * Mirrors src/tuna/config.py + scoring.py so the map matches the CLI report.
- * Pulls live sea-surface temperature + wave height per spot from Open-Meteo
- * (free, no key, CORS-enabled) and ranks spots for surface casting today.
+/* Tuna - client-side bluefin day-sheet + map.
+ * Mirrors src/tuna (config.py / scoring.py / sources/solunar.py / ocean.py) so the
+ * map matches the CLI. Live data: Open-Meteo Marine + Weather (free, no key, CORS).
+ * Everything is measured from your home port (data/home.json).
  */
 
-// --- scoring config (keep in sync with src/tuna/config.py) ---
-const SST_BANDS = [[18, 24, 1.0], [16, 26, 0.6], [14, 28, 0.3]];
-const SST_FLOOR = 0.1;
-const WAVE_BANDS = [[0.8, 1.0], [1.5, 0.7], [2.0, 0.4]];
-const WAVE_FLOOR = 0.1;
-const W_SST = 0.55, W_WAVE = 0.30, W_FRONT = 0.15;
+// ---- config (keep in sync with src/tuna/config.py) ----
+const SST_BANDS = [[18, 24, 1.0], [16, 26, 0.6], [14, 28, 0.3]], SST_FLOOR = 0.1;
+const WAVE_BANDS = [[0.8, 1.0], [1.5, 0.7], [2.0, 0.4]], WAVE_FLOOR = 0.1;
+const WIND_BANDS = [[8, 1.0], [15, 0.9], [22, 0.7], [30, 0.45], [40, 0.2]], WIND_FLOOR = 0.05;
+const CURRENT_BANDS = [[0.3, 0.45], [2.5, 1.0], [5.0, 0.7], [9.0, 0.45]], CURRENT_FLOOR = 0.3;
+const PRESSURE_BANDS = [[-1e9, -3, 0.4], [-3, -1.5, 0.7], [-1.5, -0.5, 1.0], [-0.5, 0.5, 0.9], [0.5, 1.5, 0.7], [1.5, 1e9, 0.45]];
+const CAST_WAVE_W = 0.55, CAST_WIND_W = 0.45;
 const FRONT_MIN_SPREAD = 0.5, FRONT_BASELINE = 0.3;
-
+const WEIGHTS = { sst: 0.22, front: 0.13, bait: 0.15, current: 0.10, castability: 0.17, pressure: 0.10, solunar: 0.13 };
+const SIGHTING_MAX = 0.15, SIGHTING_RADIUS_KM = 15, SIGHTING_DAYS = 3;
+const BLOWOUT_WIND = 35, BLOWOUT_WAVE = 2.0;
 const COLORS = { PRIME: "#1a9850", GOOD: "#91cf60", FAIR: "#fdae61", POOR: "#d73027" };
 
-function sstScore(t) {
-  if (t == null) return 0;
-  for (const [lo, hi, s] of SST_BANDS) if (t >= lo && t <= hi) return s;
-  return SST_FLOOR;
+const band3 = (x, bands, floor) => { for (const [lo, hi, s] of bands) if (x >= lo && x <= hi) return s; return floor; };
+const bandMax = (x, bands, floor) => { for (const [mx, s] of bands) if (x <= mx) return s; return floor; };
+const sstScore = (t) => t == null ? null : band3(t, SST_BANDS, SST_FLOOR);
+const waveScore = (h) => h == null ? null : bandMax(h, WAVE_BANDS, WAVE_FLOOR);
+const windScore = (k) => k == null ? null : bandMax(k, WIND_BANDS, WIND_FLOOR);
+const currentScore = (k) => k == null ? null : bandMax(k, CURRENT_BANDS, CURRENT_FLOOR);
+function pressureScore(t) { if (t == null) return null; for (const [lo, hi, s] of PRESSURE_BANDS) if (t >= lo && t < hi) return s; return 0.5; }
+function castabilityScore(wave, wind) {
+  const a = waveScore(wave), b = windScore(wind);
+  if (a == null && b == null) return null;
+  if (a == null) return b; if (b == null) return a;
+  return CAST_WAVE_W * a + CAST_WIND_W * b;
 }
-function waveScore(h) {
-  if (h == null) return 0;
-  for (const [max, s] of WAVE_BANDS) if (h <= max) return s;
-  return WAVE_FLOOR;
-}
-function median(xs) {
-  const a = [...xs].sort((p, q) => p - q);
-  const m = Math.floor(a.length / 2);
-  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
-}
+function median(xs) { const a = [...xs].sort((p, q) => p - q), m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
 function frontScores(ssts) {
-  const vals = ssts.filter((s) => s != null);
-  if (!vals.length) return ssts.map(() => FRONT_BASELINE);
-  const spread = Math.max(...vals) - Math.min(...vals);
+  const v = ssts.filter((s) => s != null);
+  if (!v.length) return ssts.map(() => FRONT_BASELINE);
+  const spread = Math.max(...v) - Math.min(...v);
   if (spread < FRONT_MIN_SPREAD) return ssts.map(() => FRONT_BASELINE);
-  const mid = median(vals), half = spread / 2;
-  return ssts.map((s) => (s == null ? FRONT_BASELINE : Math.max(0, Math.min(1, Math.abs(s - mid) / half))));
+  const mid = median(v), half = spread / 2;
+  return ssts.map((s) => s == null ? FRONT_BASELINE : Math.max(0, Math.min(1, Math.abs(s - mid) / half)));
 }
-function rating(score) {
-  if (score >= 0.75) return "PRIME";
-  if (score >= 0.55) return "GOOD";
-  if (score >= 0.35) return "FAIR";
-  return "POOR";
+function combineWeighted(factors) {
+  let num = 0, den = 0; const contrib = {};
+  for (const [k, sc] of Object.entries(factors)) {
+    const w = WEIGHTS[k] || 0; if (sc == null || w <= 0) continue;
+    num += w * sc; den += w; contrib[k] = +sc.toFixed(3);
+  }
+  return { total: den > 0 ? num / den : 0, contrib };
+}
+function rating(s) { return s >= 0.75 ? "PRIME" : s >= 0.55 ? "GOOD" : s >= 0.35 ? "FAIR" : "POOR"; }
+
+const COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+const compass = (d) => d == null ? "?" : COMPASS[Math.round((d % 360) / 22.5) % 16];
+const rad = (x) => x * Math.PI / 180;
+function haversine(a, b, c, d) {
+  const R = 6371, dp = rad(c - a), dl = rad(d - b);
+  const x = Math.sin(dp / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(dl / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(x)));
+}
+function bearing(a, b, c, d) {
+  const y = Math.sin(rad(d - b)) * Math.cos(rad(c));
+  const x = Math.cos(rad(a)) * Math.sin(rad(c)) - Math.sin(rad(a)) * Math.cos(rad(c)) * Math.cos(rad(d - b));
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+function sightingBoost(lat, lon, sightings, nowMs) {
+  let best = 0;
+  for (const s of sightings) {
+    const dist = haversine(lat, lon, s.lat, s.lon); if (dist > SIGHTING_RADIUS_KM) continue;
+    const age = (nowMs - s._ms) / 86400000; if (age < 0 || age > SIGHTING_DAYS) continue;
+    best = Math.max(best, SIGHTING_MAX * (1 - dist / SIGHTING_RADIUS_KM) * (1 - age / SIGHTING_DAYS));
+  }
+  return best;
+}
+// solunar (mirror of sources/solunar.py)
+function solunar(nowMs, lon, offsetSec) {
+  const SYN = 29.53058867, REF = Date.UTC(2000, 0, 6, 18, 14);
+  const f = (((nowMs - REF) / 86400000) % SYN + SYN) % SYN / SYN;
+  const names = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
+  const hhmm = (m) => { m = ((Math.round(m) % 1440) + 1440) % 1440; return `${String(m / 60 | 0).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
+  const noon = 720 - 4 * (lon - 15 * offsetSec / 3600);
+  const transit = (noon + 1440 * f) % 1440;
+  return {
+    phase: names[Math.round(f * 8) % 8],
+    illumination_pct: Math.round((1 - Math.cos(2 * Math.PI * f)) / 2 * 100),
+    day_score: 0.55 + 0.45 * Math.abs(Math.cos(2 * Math.PI * f)),
+    major_periods: [hhmm(transit), hhmm(transit + 720)],
+    minor_periods: [hhmm(transit - 360), hhmm(transit + 360)],
+  };
 }
 
-// --- live marine data ---
+// ---- live fetch ----
 async function fetchMarine(lat, lon) {
-  const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}` +
-    `&hourly=sea_surface_temperature,wave_height&timezone=auto&forecast_days=1`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Open-Meteo ${res.status}`);
-  const d = await res.json();
-  const times = d.hourly?.time || [];
-  const ssts = d.hourly?.sea_surface_temperature || [];
-  const waves = d.hourly?.wave_height || [];
-  const offset = d.utc_offset_seconds || 0;
-  const local = new Date(Date.now() + offset * 1000);
-  const label = local.toISOString().slice(0, 13) + ":00";
-  let idx = times.indexOf(label);
-  if (idx < 0) idx = times.findIndex((t) => t.endsWith(`T${String(local.getUTCHours()).padStart(2, "0")}:00`));
-  if (idx < 0) idx = Math.min(12, times.length - 1);
-  return { sst: ssts[idx] ?? null, wave: waves[idx] ?? null, hour: times[idx] || label };
+  const u = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}` +
+    `&current=sea_surface_temperature,wave_height,ocean_current_velocity,ocean_current_direction&timezone=auto`;
+  const d = await (await fetch(u)).json();
+  return { sst: d.current?.sea_surface_temperature ?? null, wave: d.current?.wave_height ?? null,
+    current: d.current?.ocean_current_velocity ?? null, offset: d.utc_offset_seconds || 0 };
+}
+async function fetchWeather(lat, lon) {
+  const u = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,cloud_cover` +
+    `&hourly=surface_pressure&past_days=1&forecast_days=1&timezone=auto`;
+  const d = await (await fetch(u)).json();
+  const c = d.current || {}, times = d.hourly?.time || [], pres = d.hourly?.surface_pressure || [];
+  let trend = null;
+  const key = (c.time || "").slice(0, 13) + ":00", i = times.indexOf(key);
+  if (i >= 3 && pres[i] != null && pres[i - 3] != null) trend = +(pres[i] - pres[i - 3]).toFixed(2);
+  return { wind: c.wind_speed_10m ?? null, gust: c.wind_gusts_10m ?? null, windDir: c.wind_direction_10m ?? null,
+    pressure: c.surface_pressure ?? null, trend, cloud: c.cloud_cover ?? null };
 }
 
-// --- map setup ---
-const map = L.map("map").setView([33.85, 35.45], 8);
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19,
-}).addTo(map);
+// ---- map ----
+const map = L.map("map");
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }).addTo(map);
+const spotLayer = L.layerGroup().addTo(map);
+const sightLayer = L.layerGroup().addTo(map);
+let homeMarker, rangeRing;
 
-const markers = {};
 const statusEl = document.getElementById("status");
+const verdictEl = document.getElementById("verdict");
+const oceanEl = document.getElementById("ocean");
 const rankingEl = document.getElementById("ranking");
-
-function fmt(v, suffix, nd = 1) { return v == null ? "n/a" : v.toFixed(nd) + suffix; }
+const fmt = (v, suf, nd = 1) => v == null ? "n/a" : v.toFixed(nd) + suf;
+const trendWord = (t) => t == null ? "n/a" : t > 0.5 ? `rising (+${t}/3h)` : t < -0.5 ? `falling (${t}/3h)` : `steady (${t >= 0 ? "+" : ""}${t}/3h)`;
 
 async function load() {
   statusEl.textContent = "Loading live sea conditions…";
-  rankingEl.innerHTML = "";
-  Object.values(markers).forEach((m) => map.removeLayer(m));
+  spotLayer.clearLayers(); sightLayer.clearLayers(); rankingEl.innerHTML = "";
 
-  let db;
+  let home, db, sightRaw;
   try {
-    const res = await fetch("../data/spots.json");
-    db = await res.json();
-  } catch (e) {
-    statusEl.textContent = "Could not load spots.json — serve the repo root (see README).";
-    return;
-  }
-  const spots = db.spots;
+    [home, db, sightRaw] = await Promise.all([
+      fetch("../data/home.json").then((r) => r.json()),
+      fetch("../data/spots.json").then((r) => r.json()),
+      fetch("../data/sightings.json").then((r) => r.json()).catch(() => ({ sightings: [] })),
+    ]);
+  } catch (e) { statusEl.textContent = "Could not load data/*.json — serve the repo root (see README)."; return; }
 
-  const marine = await Promise.all(spots.map((s) =>
-    fetchMarine(s.lat, s.lon).catch(() => ({ sst: null, wave: null, hour: null }))));
-  const fronts = frontScores(marine.map((m) => m.sst));
+  const spots = db.spots;
+  const sightings = (sightRaw.sightings || []).filter((s) => !s.example)
+    .map((s) => ({ ...s, _ms: Date.parse(s.date + "T12:00:00Z") })).filter((s) => !isNaN(s._ms));
+
+  if (!homeMarker) {
+    map.setView([home.lat, home.lon], 9);
+    homeMarker = L.marker([home.lat, home.lon], {
+      icon: L.divIcon({ className: "home-icon", html: "&#9873;", iconSize: [24, 24] }),
+    }).addTo(map).bindPopup(`<b>${home.name}</b><br>home port`);
+    rangeRing = L.circle([home.lat, home.lon], { radius: home.max_range_km * 1000,
+      color: "#7fc8e8", weight: 1, fill: false, dashArray: "5,6" }).addTo(map);
+  }
+
+  const [marine, weather] = await Promise.all([
+    Promise.all(spots.map((s) => fetchMarine(s.lat, s.lon).catch(() => ({})))),
+    Promise.all(spots.map((s) => fetchWeather(s.lat, s.lon).catch(() => ({})))),
+  ]);
+  const fronts = frontScores(marine.map((m) => m.sst ?? null));
+  const nowMs = Date.now();
+  const offset = marine.find((m) => m.offset)?.offset || 7200;
+  const moon = solunar(nowMs, home.lon, offset);
 
   const rows = spots.map((spot, i) => {
-    const m = marine[i];
-    const total = W_SST * sstScore(m.sst) + W_WAVE * waveScore(m.wave) + W_FRONT * fronts[i];
-    return { spot, m, score: total, rating: rating(total) };
+    const m = marine[i] || {}, w = weather[i] || {};
+    const { total, contrib } = combineWeighted({
+      sst: sstScore(m.sst), front: fronts[i], bait: null,
+      current: currentScore(m.current), castability: castabilityScore(m.wave, w.wind),
+      pressure: pressureScore(w.trend), solunar: moon.day_score,
+    });
+    const boost = sightingBoost(spot.lat, spot.lon, sightings, nowMs);
+    const score = Math.min(1, total + boost);
+    const dist = haversine(home.lat, home.lon, spot.lat, spot.lon);
+    return { spot, m, w, score, rating: rating(score), contrib, dist,
+      nm: dist / 1.852, brg: bearing(home.lat, home.lon, spot.lat, spot.lon),
+      inRange: dist <= home.max_range_km };
   }).sort((a, b) => b.score - a.score);
 
-  const asof = rows.find((r) => r.m.hour)?.m.hour || "now";
-  statusEl.textContent = `As of ${asof} (Asia/Beirut) · ${rows.length} spots · prime windows 05:00–08:00 & 18:00–20:00`;
+  renderVerdict(rows, moon, home);
+  renderOcean(rows, moon);
 
-  rows.forEach((r, rank) => {
+  rows.forEach((r, idx) => {
     const c = COLORS[r.rating];
-    const marker = L.circleMarker([r.spot.lat, r.spot.lon], {
-      radius: 9, color: "#0b1f2a", weight: 2, fillColor: c, fillOpacity: 0.9,
-    }).addTo(map);
-    marker.bindPopup(
-      `<b>#${rank + 1} ${r.spot.name}</b> — ${r.spot.area}<br>` +
-      `<b>${r.rating}</b> · score ${r.score.toFixed(2)}<br>` +
-      `SST ${fmt(r.m.sst, " °C")} · wave ${fmt(r.m.wave, " m")}<br>` +
-      `<small>${r.spot.lat.toFixed(3)}, ${r.spot.lon.toFixed(3)} · ${r.spot.depth_zone}</small><br>` +
-      `<small>${r.spot.notes}</small>`);
-    markers[r.spot.id] = marker;
+    L.circleMarker([r.spot.lat, r.spot.lon], {
+      radius: r.inRange ? 9 : 7, color: r.inRange ? "#0b1f2a" : "#666",
+      weight: 2, fillColor: c, fillOpacity: r.inRange ? 0.92 : 0.45,
+      dashArray: r.inRange ? null : "3,3",
+    }).addTo(spotLayer).bindPopup(
+      `<b>${r.spot.name}</b> — ${r.spot.area}<br><b>${r.rating}</b> · score ${r.score.toFixed(2)}` +
+      `${r.inRange ? "" : " · OUT OF RANGE"}<br>` +
+      `${r.nm.toFixed(1)} nm · bearing ${r.brg.toFixed(0)}° (${compass(r.brg)}) from ${home.name}<br>` +
+      `SST ${fmt(r.m.sst, " °C")} · wave ${fmt(r.m.wave, " m")} · wind ${fmt(r.w.wind, " km/h")} ${compass(r.w.windDir)}<br>` +
+      `current ${fmt(r.m.current, " km/h")} · ${r.spot.depth_zone}<br><small>${r.spot.notes}</small>`);
 
     const li = document.createElement("li");
-    li.className = r.rating.toLowerCase();
+    li.className = r.rating.toLowerCase() + (r.inRange ? "" : " outrange");
     li.innerHTML =
-      `<div class="rk-head"><span class="rk-name">${rank + 1}. ${r.spot.name}</span>` +
+      `<div class="rk-head"><span class="rk-name">${idx + 1}. ${r.spot.name}</span>` +
       `<span class="rk-rating">${r.rating} ${r.score.toFixed(2)}</span></div>` +
-      `<div class="rk-meta">SST ${fmt(r.m.sst, " °C")} · wave ${fmt(r.m.wave, " m")} · ${r.spot.area}</div>` +
-      `<div class="rk-coords">${r.spot.lat.toFixed(3)}, ${r.spot.lon.toFixed(3)}</div>`;
-    li.onclick = () => { map.setView([r.spot.lat, r.spot.lon], 11); marker.openPopup(); };
+      `<div class="rk-meta">${r.nm.toFixed(1)} nm ${compass(r.brg)} · SST ${fmt(r.m.sst, "°C")} · ` +
+      `wind ${fmt(r.w.wind, "")} ${compass(r.w.windDir)}${r.inRange ? "" : " · out of range"}</div>`;
+    li.onclick = () => { map.setView([r.spot.lat, r.spot.lon], 11); };
     rankingEl.appendChild(li);
   });
+
+  sightings.forEach((s) => {
+    L.marker([s.lat, s.lon], { icon: L.divIcon({ className: "sight-icon", html: "&#128031;", iconSize: [20, 20] }) })
+      .addTo(sightLayer).bindPopup(`<b>Sighting</b> ${s.date}<br>${s.type || ""} ${s.species || ""}<br><small>${s.note || ""}</small>`);
+  });
+
+  statusEl.textContent = `As of ${new Date(nowMs).toISOString().slice(0, 16).replace("T", " ")}Z · ` +
+    `${rows.filter((r) => r.inRange).length} spots in range`;
+}
+
+function renderVerdict(rows, moon, home) {
+  const inRange = rows.filter((r) => r.inRange);
+  const pool = inRange.length ? inRange : rows;
+  const winds = pool.map((r) => r.w.wind).filter((x) => x != null);
+  const waves = pool.map((r) => r.m.wave).filter((x) => x != null);
+  const ssts = pool.map((r) => r.m.sst).filter((x) => x != null);
+  const best = pool[0];
+  let v = "SLOW", reason = "conditions modest today";
+  const maxWind = winds.length ? Math.max(...winds) : 0, maxWave = waves.length ? Math.max(...waves) : 0;
+  if (maxWind > BLOWOUT_WIND || maxWave > BLOWOUT_WAVE) {
+    v = "TOUGH"; reason = `blown out — wind to ${maxWind.toFixed(0)} km/h, swell to ${maxWave.toFixed(1)} m`;
+  } else if (best) {
+    const wd = compass(best.w.windDir);
+    const avg = ssts.length ? (ssts.reduce((a, b) => a + b, 0) / ssts.length).toFixed(1) : "n/a";
+    reason = `${winds.length ? Math.min(...winds).toFixed(0) + "–" + maxWind.toFixed(0) + " km/h " + wd + " wind, " : ""}` +
+      `${waves.length ? Math.min(...waves).toFixed(1) + "–" + maxWave.toFixed(1) + " m swell, " : ""}water ${avg} °C`;
+    v = best.score >= 0.70 ? "GO" : best.score >= 0.55 ? "DECENT" : best.score >= 0.40 ? "MARGINAL" : "SLOW";
+  }
+  const cls = { GO: "go", DECENT: "go", MARGINAL: "warn", SLOW: "warn", TOUGH: "bad" }[v] || "warn";
+  verdictEl.className = "verdict " + cls;
+  verdictEl.innerHTML = `<span class="v-word">${v}</span><span class="v-reason">${reason}</span>`;
+}
+
+function renderOcean(rows, moon) {
+  const pool = rows.filter((r) => r.inRange).length ? rows.filter((r) => r.inRange) : rows;
+  const ref = pool.reduce((a, b) => a.dist < b.dist ? a : b, pool[0]);
+  const g = (f) => pool.map(f).filter((x) => x != null);
+  const ssts = g((r) => r.m.sst), waves = g((r) => r.m.wave), winds = g((r) => r.w.wind), curr = g((r) => r.m.current);
+  const range = (a, suf, nd = 1) => a.length ? `${Math.min(...a).toFixed(nd)}–${Math.max(...a).toFixed(nd)}${suf}` : "n/a";
+  oceanEl.innerHTML = [
+    ["Sea temp", range(ssts, " °C")],
+    ["Swell", range(waves, " m")],
+    ["Wind", `${range(winds, " km/h", 0)} ${compass(ref.w.windDir)}`],
+    ["Pressure", `${fmt(ref.w.pressure, " hPa")}, ${trendWord(ref.w.trend)}`],
+    ["Current", `~${curr.length ? (curr.reduce((a, b) => a + b, 0) / curr.length).toFixed(1) : "n/a"} km/h`],
+    ["Moon", `${moon.phase}, ${moon.illumination_pct}%`],
+    ["Solunar", `${moon.major_periods.join(" / ")} (approx)`],
+  ].map(([k, val]) => `<div><span>${k}</span><b>${val}</b></div>`).join("");
 }
 
 document.getElementById("refresh").onclick = load;
+document.getElementById("toggle-sight").onchange = (e) =>
+  e.target.checked ? map.addLayer(sightLayer) : map.removeLayer(sightLayer);
 load();

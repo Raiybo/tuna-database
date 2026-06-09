@@ -1,35 +1,77 @@
 """Pure scoring functions - no I/O, fully unit-testable."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+import math
 from statistics import median
 
 from . import config
 
 
-def sst_score(sst: float) -> float:
-    """Score sea-surface temperature against the configured bands."""
+def sst_score(t: float) -> float:
     for low, high, score in config.SST_BANDS:
-        if low <= sst <= high:
+        if low <= t <= high:
             return score
     return config.SST_FLOOR
 
 
-def wave_score(wave_height: float) -> float:
-    """Score castability from significant wave height (lower = better)."""
+def wave_score(h: float) -> float:
     for max_h, score in config.WAVE_BANDS:
-        if wave_height <= max_h:
+        if h <= max_h:
             return score
     return config.WAVE_FLOOR
 
 
-def front_scores(ssts):
-    """Heuristic 'thermal edge' score per spot, aligned with the input order.
+def wind_score(kmh: float) -> float:
+    for max_k, score in config.WIND_BANDS:
+        if kmh <= max_k:
+            return score
+    return config.WIND_FLOOR
 
-    Bluefin and their bait stack along temperature breaks. Spots whose SST sits
-    far from the regional median - i.e. on the warm or cold edge of a break -
-    score higher. A flat-temperature day scores every spot at baseline.
-    ``None`` entries (missing data) get the baseline.
+
+def current_score(kmh: float) -> float:
+    for max_k, score in config.CURRENT_BANDS:
+        if kmh <= max_k:
+            return score
+    return config.CURRENT_FLOOR
+
+
+def pressure_score(trend_3h):
+    if trend_3h is None:
+        return None
+    for low, high, score in config.PRESSURE_BANDS:
+        if low <= trend_3h < high:
+            return score
+    return config.PRESSURE_FLOOR
+
+
+def bait_score(chl):
+    if chl is None:
+        return None
+    for low, high, score in config.CHL_BANDS:
+        if low <= chl < high:
+            return score
+    return config.CHL_FLOOR
+
+
+def castability_score(wave, wind):
+    """Blend wave height and wind speed into one 0..1 castability score."""
+    ws = wave_score(wave) if wave is not None else None
+    nd = wind_score(wind) if wind is not None else None
+    if ws is None and nd is None:
+        return None
+    if ws is None:
+        return nd
+    if nd is None:
+        return ws
+    return round(config.CAST_WAVE_W * ws + config.CAST_WIND_W * nd, 4)
+
+
+def front_scores(ssts):
+    """Per-spot 'thermal edge' score aligned with the input order.
+
+    Bait and tuna stack on temperature breaks. Spots whose SST sits far from the
+    regional median (the warm or cold edge of a break) score higher; a flat day
+    scores everyone at baseline. ``None`` entries get the baseline.
     """
     values = [s for s in ssts if s is not None]
     if not values:
@@ -48,19 +90,45 @@ def front_scores(ssts):
     return out
 
 
-@dataclass
-class Suitability:
-    total: float
-    sst: float
-    wave: float
-    front: float
+def combine_weighted(factors: dict):
+    """Weighted average over present (non-None) factors, renormalised.
+
+    Returns (total_score, contributions) where contributions maps each used
+    factor to its 0..1 score. Missing factors simply drop out of the blend.
+    """
+    num = den = 0.0
+    contrib = {}
+    for name, score in factors.items():
+        weight = config.WEIGHTS.get(name, 0.0)
+        if score is None or weight <= 0:
+            continue
+        num += weight * score
+        den += weight
+        contrib[name] = round(score, 3)
+    total = round(num / den, 4) if den > 0 else 0.0
+    return total, contrib
 
 
-def combine(sst_s: float, wave_s: float, front_s: float) -> Suitability:
-    """Weighted blend of the three factor scores into a final 0..1 score."""
-    total = (
-        config.WEIGHT_SST * sst_s
-        + config.WEIGHT_WAVE * wave_s
-        + config.WEIGHT_FRONT * front_s
-    )
-    return Suitability(round(total, 4), sst_s, wave_s, front_s)
+def haversine_km(lat1, lon1, lat2, lon2):
+    r = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(min(1.0, math.sqrt(a)))
+
+
+def sighting_boost(lat, lon, sightings, now):
+    """Additive boost (0..SIGHTING_MAX) from recent nearby real sightings."""
+    best = 0.0
+    for s in sightings:
+        dist = haversine_km(lat, lon, s["lat"], s["lon"])
+        if dist > config.SIGHTING_RADIUS_KM:
+            continue
+        age_days = (now - s["_dt"]).total_seconds() / 86400.0
+        if age_days < 0 or age_days > config.SIGHTING_DAYS:
+            continue
+        prox = 1.0 - dist / config.SIGHTING_RADIUS_KM
+        rec = 1.0 - age_days / config.SIGHTING_DAYS
+        best = max(best, config.SIGHTING_MAX * prox * rec)
+    return round(best, 4)

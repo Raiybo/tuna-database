@@ -1,0 +1,7 @@
+{
+  "name": "Marina Baye (assumed: Dbayeh)",
+  "lat": 33.935,
+  "lon": 35.59,
+  "max_range_km": 40,
+  "note": "Your home port - every distance/heading in the report is measured from here. ASSUMED location; set lat/lon to your exact marina. 40 km (~22 nm) is the day-trip search radius; raise/lower max_range_km to taste."
+}

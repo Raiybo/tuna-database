@@ -1,105 +1,99 @@
-# 🐟 Tuna — bluefin casting-spot finder for the Lebanese coast
+# 🐟 Tuna — bluefin day-sheet for your marina (Lebanese coast)
 
-A small, data-driven system that ranks **day-to-day spots for casting to Atlantic
-bluefin tuna** (_Thunnus thynnus_) along the Lebanese coast. For each spot it pulls
-**live sea-surface temperature and wave height**, applies a tuna-suitability model,
-and tells you **where to go today** — with coordinates.
-
-Two ways to use it:
+Ask it day to day: **"How's the ocean, and is it a good day to chase bluefin?"**
+For your home port it pulls **multiple live data sources**, reads the water for bait/forage
+signals, and tells you **GO / DECENT / MARGINAL / TOUGH** plus **where to run** — ranked by
+distance from your marina and today's conditions, with coordinates and headings. Plus an
+**interactive map** centered on you, spots colour-coded by today's score, with a sightings layer.
 
 | | What | Best for |
 |---|---|---|
-| 🗺️ **Map dashboard** | [`web/`](web/) — interactive Leaflet map, spots colour-coded by today's suitability | Visual, on the phone before you launch |
-| ⌨️ **CLI report** | `tuna` — ranked text/JSON/Markdown report | Terminal, automation, the daily GitHub Action |
+| 🗺️ **Map dashboard** | [`web/`](web/) — Leaflet map from your marina, range ring, live conditions, sightings layer | Visual planning on the phone |
+| ⌨️ **Day sheet (CLI)** | `tuna` — ocean summary + go/no-go + ranked spots | Terminal, automation, the daily Action |
 
-> **Heads-up:** these are **search zones over deeper water and current edges**, not
-> guaranteed marks. Refine the coordinates and add your own waypoints from real catch
-> logs. Bluefin tuna are a **regulated species** — check current Lebanese / ICCAT
-> seasons, quotas and permits before targeting them, and release what you can't legally keep.
+> These are **search zones over deeper water / current edges**, not guaranteed marks. Bluefin tuna
+> are a **regulated species** — check current Lebanese / ICCAT seasons, quotas and permits before
+> targeting them, and release what you can't legally keep.
 
 ---
 
-## How it ranks a spot
+## It's measured from *your* marina
 
-Each spot gets a `0–1` suitability score (→ **PRIME / GOOD / FAIR / POOR**) from three live factors:
+[`data/home.json`](data/home.json) sets your home port and day-trip radius:
 
-| Factor | Weight | Logic |
-|---|---:|---|
-| **Sea-surface temperature** | 0.55 | Optimal **18–24 °C** for warm-season Eastern-Med bluefin feeding near the surface; tapers off outside that. |
-| **Castability (wave height)** | 0.30 | Glassy (≤ 0.8 m) is ideal for poppers/stickbaits; > 2 m is unsafe/unfishable. |
-| **Thermal edge (front)** | 0.15 | Bait and tuna stack on temperature breaks. Spots on the warm/cold edge of the day's regional spread score higher. |
+```json
+{ "name": "Marina Baye", "lat": 33.935, "lon": 35.59, "max_range_km": 40 }
+```
 
-All thresholds live in [`src/tuna/config.py`](src/tuna/config.py) and
-[`web/app.js`](web/app.js) — tune them to your local knowledge.
+Every spot gets a **distance (nm)** and **heading** from there; spots beyond `max_range_km` are
+flagged out-of-range. The map centers on you with a dashed range ring. Override per run with
+`tuna --home 34.0,35.6 --range 60`.
 
-The spot database lives in [`data/spots.json`](data/spots.json) — **edit this file** to
-add, move, or annotate marks. It's the single source of truth for both the CLI and the map.
+## Multiple live sources → one score
+
+Each spot's `0–1` suitability (→ **PRIME / GOOD / FAIR / POOR**) blends independent live factors.
+If a source is missing, its weight is **renormalised** over the rest, so the score degrades cleanly.
+
+| Factor | Source | Weight | Read |
+|---|---|--:|---|
+| Sea-surface temp | Open-Meteo Marine | 0.22 | Optimal 18–24 °C warm-season feeding |
+| Thermal front | derived from the SST field | 0.13 | Breaks concentrate bait |
+| Bait / chlorophyll | ERDDAP (gated) | 0.15 | Productivity proxy — *off until a fresh feed is wired* |
+| Ocean current | Open-Meteo Marine | 0.10 | A moderate drift makes feeding edges |
+| Castability | wind + wave | 0.17 | Can you cast & spot busts? |
+| Pressure trend | Open-Meteo Weather | 0.10 | A slow fall often turns fish on |
+| Solunar / moon | computed locally | 0.13 | Major/minor periods, new/full strength |
+
+Recent **sightings** you log ([`data/sightings.json`](data/sightings.json)) add an extra boost to
+nearby spots and appear on the map. Tunables live in [`src/tuna/config.py`](src/tuna/config.py)
+(and mirrored in [`web/app.js`](web/app.js)).
+
+### A note on "bait in the water"
+
+The free satellite chlorophyll feeds reachable without a login are currently frozen (~2022), so
+chlorophyll is **disabled by default** (`CHL_ENABLED = False`). Today's *live* bait read comes from
+**thermal fronts + current edges + your sightings log**. To fortify: add a fresh source to
+[`src/tuna/sources/chlorophyll.py`](src/tuna/sources/chlorophyll.py) and flip `CHL_ENABLED` on — the
+weight activates automatically. This is the natural seam for merging your other repo.
 
 ---
 
 ## Quick start
 
-### CLI report (no install, stdlib only)
-
 ```bash
-# from the repo root
-PYTHONPATH=src python -m tuna            # ranked table for today
-PYTHONPATH=src python -m tuna --top 5    # only the top 5
-PYTHONPATH=src python -m tuna --json     # machine-readable
-PYTHONPATH=src python -m tuna --markdown # Markdown
+# Day sheet (stdlib only, no install)
+PYTHONPATH=src python3 -m tuna              # today's ocean + where to go
+PYTHONPATH=src python3 -m tuna --all        # include spots beyond day range
+PYTHONPATH=src python3 -m tuna --json       # machine-readable
+PYTHONPATH=src python3 -m tuna --markdown   # Markdown (daily Action)
+
+# Map dashboard — serve from the repo root so it can read data/*.json
+python3 -m http.server 8000                 # open http://localhost:8000/web/
+
+# Tests
+pip install -e ".[dev]" && pytest
 ```
-
-Or install it as a `tuna` command:
-
-```bash
-pip install -e .
-tuna --top 5
-```
-
-### Map dashboard
-
-The map fetches `data/spots.json`, so serve from the **repo root**:
-
-```bash
-python3 -m http.server 8000
-# then open http://localhost:8000/web/
-```
-
-To publish: enable **GitHub Pages** (Settings → Pages → deploy from `main`, root) and
-visit `/web/`.
-
-### Tests
-
-```bash
-pip install -e ".[dev]"
-pytest
-```
-
----
 
 ## Daily automation
 
-[`.github/workflows/daily-report.yml`](.github/workflows/daily-report.yml) runs every
-morning (~06:00 Beirut), regenerates `docs/today.md` with the day's ranked spots, and
-commits it. Enable Actions on the repo to turn it on (or trigger it manually from the
-Actions tab).
-
----
+[`.github/workflows/daily-report.yml`](.github/workflows/daily-report.yml) regenerates
+`docs/today.md` every morning (~06:00 Beirut). Enable Actions to turn it on. (Pushing this file
+needs the `workflow` token scope — see commit notes.)
 
 ## Project layout
 
 ```
-data/spots.json          Spot database (coordinates, structure, notes) — edit this
+data/    home.json · spots.json · sightings.json        ← edit these
 src/tuna/
-  config.py              Scoring thresholds & weights
-  scoring.py             Pure scoring functions (SST, wave, thermal front)
-  marine.py              Open-Meteo Marine API client (stdlib urllib)
-  spots.py               Load & validate spots
-  report.py              Fetch live data + rank spots
-  cli.py                 `tuna` command (table / JSON / Markdown)
-web/                     Leaflet map dashboard (live, client-side)
-tests/                   pytest unit tests for the scoring model
+  config.py        scoring thresholds & factor weights
+  scoring.py       pure factor scores + weighted blend
+  sources/         openmeteo_marine · openmeteo_weather · chlorophyll · solunar
+  conditions.py    parallel multi-source gather + distance/bearing from home
+  model.py         Conditions -> suitability score
+  ocean.py         daily ocean summary + go/no-go verdict
+  report.py        orchestrate · cli.py  the `tuna` command
+web/     interactive map dashboard (live, client-side)
+tests/   pytest unit tests
 ```
 
-Data: live marine conditions from [Open-Meteo](https://open-meteo.com/) (free, no API key).
-License: MIT.
+Data: [Open-Meteo](https://open-meteo.com/) (free, no key). License: MIT.

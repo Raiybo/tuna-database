@@ -1,11 +1,15 @@
-"""Load and validate the spot database (data/spots.json)."""
+"""Load and validate the data files: spots, home port, and sightings."""
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
-DATA_FILE = Path(__file__).resolve().parents[2] / "data" / "spots.json"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+SPOTS_FILE = DATA_DIR / "spots.json"
+HOME_FILE = DATA_DIR / "home.json"
+SIGHTINGS_FILE = DATA_DIR / "sightings.json"
 
 
 @dataclass
@@ -21,9 +25,17 @@ class Spot:
     notes: str
 
 
+@dataclass
+class Home:
+    name: str
+    lat: float
+    lon: float
+    max_range_km: float
+    note: str = ""
+
+
 def load_spots(path: Path | None = None) -> list[Spot]:
-    """Read, validate and return all spots. Raises on malformed data."""
-    path = Path(path) if path else DATA_FILE
+    path = Path(path) if path else SPOTS_FILE
     raw = json.loads(path.read_text(encoding="utf-8"))
     spots: list[Spot] = []
     seen: set[str] = set()
@@ -33,22 +45,47 @@ def load_spots(path: Path | None = None) -> list[Spot]:
             raise ValueError(f"Duplicate spot id: {sid}")
         seen.add(sid)
         lat, lon = float(s["lat"]), float(s["lon"])
-        # Sanity box around Lebanese waters.
         if not (33.0 <= lat <= 34.8 and 34.8 <= lon <= 36.1):
             raise ValueError(f"Spot {sid} lat/lon out of Lebanon range: {lat}, {lon}")
-        spots.append(
-            Spot(
-                id=sid,
-                name=s["name"],
-                area=s["area"],
-                lat=lat,
-                lon=lon,
-                depth_zone=s.get("depth_zone", ""),
-                structure=s.get("structure", ""),
-                best_months=list(s.get("best_months", [])),
-                notes=s.get("notes", ""),
-            )
-        )
+        spots.append(Spot(
+            id=sid, name=s["name"], area=s["area"], lat=lat, lon=lon,
+            depth_zone=s.get("depth_zone", ""), structure=s.get("structure", ""),
+            best_months=list(s.get("best_months", [])), notes=s.get("notes", ""),
+        ))
     if not spots:
         raise ValueError(f"No spots found in {path}")
     return spots
+
+
+def load_home(path: Path | None = None) -> Home:
+    path = Path(path) if path else HOME_FILE
+    d = json.loads(path.read_text(encoding="utf-8"))
+    return Home(
+        name=d.get("name", "Home"),
+        lat=float(d["lat"]),
+        lon=float(d["lon"]),
+        max_range_km=float(d.get("max_range_km", 40)),
+        note=d.get("note", ""),
+    )
+
+
+def load_sightings(path: Path | None = None) -> list[dict]:
+    """Return real sightings with a parsed UTC datetime in ``_dt``.
+
+    Rows flagged ``"example": true`` are skipped. Missing file -> empty list.
+    """
+    path = Path(path) if path else SIGHTINGS_FILE
+    if not path.exists():
+        return []
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    out: list[dict] = []
+    for s in raw.get("sightings", []):
+        if s.get("example"):
+            continue
+        try:
+            dt = datetime.strptime(s["date"], "%Y-%m-%d").replace(
+                hour=12, tzinfo=timezone.utc)
+        except (KeyError, ValueError):
+            continue
+        out.append({**s, "_dt": dt})
+    return out

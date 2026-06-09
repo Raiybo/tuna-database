@@ -1,33 +1,51 @@
-"""Assemble the daily bluefin casting report from spots + live marine data."""
+"""Orchestrate the daily report: gather live data, score, rank, summarise."""
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
-from . import config, scoring
-from .marine import Marine, fetch_marine
-from .spots import Spot, load_spots
+from . import conditions as conditions_mod
+from . import model, ocean, scoring
+from .conditions import Conditions
+from .sources import solunar as solunar_mod
+from .spots import Home, Spot, load_home, load_sightings, load_spots
 
 
 @dataclass
 class SpotReport:
     spot: Spot
-    marine: Marine
-    suit: scoring.Suitability
-    rating: str
+    cond: Conditions
+    score: model.SpotScore
 
 
-def build_report(spots: list[Spot] | None = None) -> list[SpotReport]:
-    """Fetch conditions for every spot, score them, and return ranked best-first."""
-    spots = spots if spots is not None else load_spots()
-    marines = [fetch_marine(s.lat, s.lon) for s in spots]
-    fronts = scoring.front_scores([m.sst_now for m in marines])
+@dataclass
+class Report:
+    ocean: ocean.Ocean
+    spots: list          # ranked SpotReport, best first
+    home: Home
 
-    reports: list[SpotReport] = []
-    for spot, m, front in zip(spots, marines, fronts):
-        sst_s = scoring.sst_score(m.sst_now) if m.sst_now is not None else 0.0
-        wave_s = scoring.wave_score(m.wave_now) if m.wave_now is not None else 0.0
-        suit = scoring.combine(sst_s, wave_s, front)
-        reports.append(SpotReport(spot, m, suit, config.rating(suit.total)))
 
-    reports.sort(key=lambda r: r.suit.total, reverse=True)
-    return reports
+def build_report(enable_chl: bool | None = None,
+                 home_override: Home | None = None) -> Report:
+    spots = load_spots()
+    home = home_override or load_home()
+    sightings = load_sightings()
+
+    conds = conditions_mod.gather(spots, home, enable_chl)
+    fronts = scoring.front_scores([c.marine.get("sst") for c in conds])
+
+    offset = next((c.marine.get("utc_offset_sec") for c in conds
+                   if c.marine.get("utc_offset_sec") is not None), 7200)
+    now = datetime.now(timezone.utc)
+    sol = solunar_mod.solunar(now, home.lon, offset)
+
+    reports = []
+    for spot, cond, front in zip(spots, conds, fronts):
+        sc = model.score(spot, cond, front, sol["day_score"], sightings, now)
+        reports.append(SpotReport(spot, cond, sc))
+    reports.sort(key=lambda r: r.score.total, reverse=True)
+
+    label = next((c.marine.get("hour_label") for c in conds
+                  if c.marine.get("hour_label")), now.strftime("%Y-%m-%dT%H:%M"))
+    summary = ocean.build(reports, sol, home, label, sightings)
+    return Report(ocean=summary, spots=reports, home=home)

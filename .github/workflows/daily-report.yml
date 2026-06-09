@@ -1,0 +1,31 @@
+name: Daily tuna report
+
+# Generates docs/today.md every morning so you have an up-to-date ranked list
+# of bluefin casting spots without running anything locally.
+on:
+  schedule:
+    - cron: "0 3 * * *"   # 03:00 UTC ~ 06:00 Asia/Beirut (first-light planning)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate today's report
+        run: |
+          mkdir -p docs
+          PYTHONPATH=src python -m tuna --markdown > docs/today.md
+      - name: Commit if changed
+        run: |
+          git config user.name "tuna-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/today.md
+          git commit -m "chore: daily tuna report" || echo "No changes to commit"
+          git push

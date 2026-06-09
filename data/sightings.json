@@ -1,0 +1,22 @@
+{
+  "note": "Log real observations here - busting fish, bait balls, working birds, or recent catches. A recent entry within 15 km and 3 days boosts nearby spots' scores and is drawn on the map. Your other repo can append to this file to feed live intel. Set \"example\": true on rows the scorer should ignore.",
+  "schema": {
+    "date": "YYYY-MM-DD",
+    "lat": "decimal degrees",
+    "lon": "decimal degrees",
+    "type": "busting_fish | bait_ball | birds | catch | marks",
+    "species": "bluefin | bonito | mixed | bait",
+    "note": "free text"
+  },
+  "sightings": [
+    {
+      "date": "2026-06-08",
+      "lat": 33.97,
+      "lon": 35.55,
+      "type": "busting_fish",
+      "species": "bluefin",
+      "note": "EXAMPLE ROW - replace with your own. Dawn surface busts on anchovy off Tabarja.",
+      "example": true
+    }
+  ]
+}
