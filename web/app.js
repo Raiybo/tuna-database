@@ -111,10 +111,47 @@ async function fetchWeather(lat, lon) {
 
 // ---- map ----
 const map = L.map("map");
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+const darkBase = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
   { attribution: "&copy; OpenStreetMap &copy; CARTO", maxZoom: 19 }).addTo(map);
+
+// NASA GIBS near-real-time true-colour satellite (free, no key). Yesterday UTC is
+// the most reliably-processed day. Shows real water colour / sediment / blooms -
+// NOT live frenzies (a tuna bust is metres-wide & minutes-long, smaller & briefer
+// than any free satellite can catch). Use it to find blooms & colour edges.
+function gibsDate(daysBack) { return new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10); }
+function gibs(layer) {
+  return L.tileLayer(
+    `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${layer}/default/${gibsDate(1)}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+    { attribution: `Imagery &copy; NASA GIBS/Worldview · ${gibsDate(1)}`,
+      maxNativeZoom: 9, maxZoom: 19, bounds: [[-85, -180], [85, 180]] });
+}
+const viirsBase = gibs("VIIRS_SNPP_CorrectedReflectance_TrueColor");
+const modisBase = gibs("MODIS_Terra_CorrectedReflectance_TrueColor");
+
 const spotLayer = L.layerGroup().addTo(map);
 const sightLayer = L.layerGroup().addTo(map);
+
+L.control.layers(
+  { "Dark map": darkBase, "Satellite · VIIRS (NRT)": viirsBase, "Satellite · MODIS (NRT)": modisBase },
+  { "Fishing spots": spotLayer, "Frenzies / sightings": sightLayer },
+  { collapsed: true }
+).addTo(map);
+
+// Tap anywhere (or on a satellite feature) to get its exact GPS + a 10 m Sentinel-2 image.
+let clickMarker;
+map.on("click", (e) => {
+  const lat = e.latlng.lat, lon = e.latlng.lng;
+  const eo = `https://apps.sentinel-hub.com/eo-browser/?zoom=14&lat=${lat}&lng=${lon}`;
+  const gmap = `https://www.google.com/maps?q=${lat.toFixed(5)},${lon.toFixed(5)}`;
+  if (clickMarker) map.removeLayer(clickMarker);
+  clickMarker = L.marker([lat, lon]).addTo(map).bindPopup(
+    `<b>${lat.toFixed(5)}, ${lon.toFixed(5)}</b><br>` +
+    `<a href="${gmap}" target="_blank" rel="noopener">Open in Maps</a><br>` +
+    `<a href="${eo}" target="_blank" rel="noopener">Latest Sentinel-2 (10 m) here</a><br>` +
+    `<small>Switch to a Satellite layer, find a bloom / colour edge, tap it for its GPS.</small>`
+  ).openPopup();
+});
+
 let homeMarker, rangeRing;
 
 const statusEl = document.getElementById("status");
@@ -201,9 +238,23 @@ async function load() {
     rankingEl.appendChild(li);
   });
 
+  const FRENZY = new Set(["busting_fish", "bait_ball", "birds"]);
   sightings.forEach((s) => {
-    L.marker([s.lat, s.lon], { icon: L.divIcon({ className: "sight-icon", html: "&#128031;", iconSize: [20, 20] }) })
-      .addTo(sightLayer).bindPopup(`<b>Sighting</b> ${s.date}<br>${s.type || ""} ${s.species || ""}<br><small>${s.note || ""}</small>`);
+    const isFrenzy = FRENZY.has(s.type);
+    const ageDays = Math.max(0, Math.round((nowMs - s._ms) / 86400000));
+    const html = isFrenzy
+      ? '<span style="font-size:20px;filter:drop-shadow(0 0 3px #ff3b30)">&#128165;</span>'  // 💥
+      : '<span style="font-size:16px">&#128031;</span>';                                       // 🐟
+    const eo = `https://apps.sentinel-hub.com/eo-browser/?zoom=14&lat=${s.lat}&lng=${s.lon}`;
+    const gmap = `https://www.google.com/maps?q=${s.lat},${s.lon}`;
+    L.marker([s.lat, s.lon], { icon: L.divIcon({ className: "sight-icon", html, iconSize: [22, 22] }) })
+      .addTo(sightLayer).bindPopup(
+        `<b>${isFrenzy ? "FRENZY / activity" : "Sighting"}</b> · ${s.date} (${ageDays}d ago)<br>` +
+        `${(s.type || "").replace(/_/g, " ")} ${s.species || ""}<br>` +
+        `${s.note ? "<small>" + s.note + "</small><br>" : ""}` +
+        `<b>${s.lat.toFixed(4)}, ${s.lon.toFixed(4)}</b><br>` +
+        `<a href="${gmap}" target="_blank" rel="noopener">Maps</a> · ` +
+        `<a href="${eo}" target="_blank" rel="noopener">Sentinel-2 image</a>`);
   });
 
   statusEl.textContent = `As of ${new Date(nowMs).toISOString().slice(0, 16).replace("T", " ")}Z · ` +
