@@ -18,14 +18,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Generate today's report
+      - name: Install image deps
+        run: pip install pillow
+      - name: Generate today's report + day-sheet image
         run: |
           mkdir -p docs
           PYTHONPATH=src python -m tuna --markdown > docs/today.md
+          PYTHONPATH=src python tools/day_image.py
       - name: Commit if changed
         run: |
           git config user.name "tuna-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add docs/today.md
-          git commit -m "chore: daily tuna report" || echo "No changes to commit"
+          git add docs/today.md docs/day.png
+          git commit -m "chore: daily tuna report + day image" || echo "No changes to commit"
           git push
