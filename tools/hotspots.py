@@ -29,6 +29,7 @@ SEARCH_KM = 22.0        # how far from the marina to scan for hotspots
 GRAD_KM = 7.0           # neighbourhood for the front / colour gradient
 N_HOTSPOTS = 6
 MIN_SEP_KM = 4.0        # de-cluster spacing
+MIN_DEPTH_M = 25.0      # require >= 25 m of water: never land, never a shallow shoal
 
 
 def km(lat1, lon1, lat2, lon2):
@@ -79,6 +80,22 @@ def erddap_grid(dataset, var, has_alt, lat0, lat1, lon0, lon1):
                  if q is not p and km(p["lat"], p["lon"], q["lat"], q["lon"]) <= GRAD_KM]
         p["grad"] = sum(diffs) / len(diffs) if diffs else 0.0
     return date, pts
+
+
+def etopo_depth_points(lat0, lat1, lon0, lon1):
+    """ETOPO 2022 elevation grid (negative = metres below sea level). Land/water mask."""
+    url = f"{ERDDAP}/ETOPO_2022_v1_15s.csv?z%5B({lat0}):({lat1})%5D%5B({lon0}):({lon1})%5D"
+    lines = get_text(url, retries=3, timeout=60).strip().splitlines()
+    cols = lines[0].split(",")
+    li, oi, vi = cols.index("latitude"), cols.index("longitude"), len(cols) - 1
+    pts = []
+    for row in lines[2:]:
+        f = row.split(",")
+        try:
+            pts.append({"lat": float(f[li]), "lon": float(f[oi]), "val": float(f[vi])})
+        except (ValueError, IndexError):
+            continue
+    return pts
 
 
 def nearest(pts, lat, lon, max_km=6.0):
@@ -157,6 +174,21 @@ def main():
     # candidate cells = SST grid points within range, on the seaward side
     cands = [p for p in sst
              if km(hlat, hlon, p["lat"], p["lon"]) <= SEARCH_KM and p["lon"] <= hlon + 0.02]
+
+    # HARD land/depth guard: keep only points with real offshore water beneath them
+    try:
+        depth_pts = etopo_depth_points(hlat - dlat, hlat + dlat, hlon - dlon, hlon + 0.03)
+    except Exception:
+        depth_pts = []
+    if depth_pts:
+        water = []
+        for p in cands:
+            dp, _ = nearest(depth_pts, p["lat"], p["lon"], max_km=1.5)
+            if dp and dp["val"] <= -MIN_DEPTH_M:
+                p["depth_m"] = int(round(-dp["val"]))
+                water.append(p)
+        cands = water
+
     currents = fetch_currents(cands)
 
     scored = []
@@ -182,6 +214,7 @@ def main():
         scored.append({
             "lat": round(p["lat"], 4), "lon": round(p["lon"], 4),
             "score": round(score, 3), "sst_c": round(p["val"], 1),
+            "depth_m": p.get("depth_m"),
             "sst_break_c": round(p["grad"], 2),
             "chl": round(chl_v, 2) if chl_v is not None else None,
             "current_kmh": round(cur, 1) if cur is not None else None,
