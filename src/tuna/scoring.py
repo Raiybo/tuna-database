@@ -90,16 +90,18 @@ def front_scores(ssts):
     return out
 
 
-def combine_weighted(factors: dict):
+def combine_weighted(factors: dict, weights: dict | None = None):
     """Weighted average over present (non-None) factors, renormalised.
 
     Returns (total_score, contributions) where contributions maps each used
     factor to its 0..1 score. Missing factors simply drop out of the blend.
+    Pass ``weights`` to use a different weight set (e.g. WEIGHTS_HOURLY).
     """
+    weights = weights or config.WEIGHTS
     num = den = 0.0
     contrib = {}
     for name, score in factors.items():
-        weight = config.WEIGHTS.get(name, 0.0)
+        weight = weights.get(name, 0.0)
         if score is None or weight <= 0:
             continue
         num += weight * score
@@ -107,6 +109,51 @@ def combine_weighted(factors: dict):
         contrib[name] = round(score, 3)
     total = round(num / den, 4) if den > 0 else 0.0
     return total, contrib
+
+
+def _hm_to_hours(s: str) -> float:
+    hh, mm = s.split(":")
+    return int(hh) + int(mm) / 60.0
+
+
+def _circ_hours(a: float, b: float) -> float:
+    d = abs(a - b) % 24.0
+    return min(d, 24.0 - d)
+
+
+def feeding_time_score(hour: float, solunar: dict) -> float:
+    """Time-of-day bite likelihood (0..1): prime light windows stacked with
+    solunar major/minor periods. Peaks when a solunar major lands on dawn/dusk.
+    """
+    base = config.FEEDING_BASELINE
+    edge = config.FEEDING_LIGHT_EDGE_H
+
+    light = base
+    for a, b in config.PRIME_WINDOWS:
+        if a <= hour <= b:
+            light = 1.0
+            break
+        near = min(abs(hour - a), abs(hour - b))
+        if near <= edge:
+            light = max(light, 1.0 - (1.0 - base) * (near / edge))
+
+    sol = base
+    for t in solunar.get("major_periods", []):
+        d = _circ_hours(hour, _hm_to_hours(t))
+        if d <= config.FEEDING_SOLUNAR_MAJOR_H:
+            sol = max(sol, 1.0)
+        elif d <= config.FEEDING_SOLUNAR_MAJOR_H + 1.0:
+            sol = max(sol, 1.0 - 0.6 * (d - config.FEEDING_SOLUNAR_MAJOR_H))
+    ms = config.FEEDING_SOLUNAR_MINOR_STRENGTH
+    for t in solunar.get("minor_periods", []):
+        d = _circ_hours(hour, _hm_to_hours(t))
+        if d <= config.FEEDING_SOLUNAR_MINOR_H:
+            sol = max(sol, ms)
+        elif d <= config.FEEDING_SOLUNAR_MINOR_H + 1.0:
+            sol = max(sol, ms - 0.4 * (d - config.FEEDING_SOLUNAR_MINOR_H))
+
+    stacked = 1.0 if (light >= 0.8 and sol >= 0.8) else max(light, sol)
+    return round(min(1.0, stacked), 3)
 
 
 def haversine_km(lat1, lon1, lat2, lon2):

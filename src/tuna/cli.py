@@ -219,6 +219,76 @@ def render_markdown(rep) -> str:
     return "\n".join(L)
 
 
+_SPARK = "▁▂▃▄▅▆▇█"
+
+
+def _spark(curve, lo=0.3, hi=0.85):
+    out = []
+    for _, s in curve:
+        t = max(0.0, min(1.0, (s - lo) / (hi - lo)))
+        out.append(_SPARK[round(t * (len(_SPARK) - 1))])
+    return "".join(out)
+
+
+def _pattern_lines(day, indent="   "):
+    if not day.patterns:
+        return f"{indent}patterns: none strongly aligned today"
+    rows = [f"{indent}patterns ({day.confidence} confidence):"]
+    for p in day.patterns:
+        mark = "++" if p.strong else " +"
+        rows.append(f"{indent}  {mark} {p.name} - {p.note}")
+    return "\n".join(rows)
+
+
+def render_forecast(fc) -> str:
+    if not fc.days:
+        return "No forecast available (data sources unreachable)."
+    L = ["=" * 70,
+         f" FORECAST - next {len(fc.days)} days from {fc.home.name}",
+         "=" * 70, "",
+         f"  {'DAY':10}  {'VERDICT':7}  {'SCORE':>5}  {'PEAK WINDOW':12}  "
+         f"{'BEST SPOT':22}  CONF",
+         "  " + "-" * 66]
+    for d in fc.days:
+        tag = "Today" if d.is_today else f"{d.weekday} {d.date[5:]}"
+        spot = f"{d.best_spot.name[:16]} {d.best_dist_nm:.0f}nm {d.best_heading}"
+        L.append(f"  {tag:10}  {d.verdict:7}  {d.score:>5.2f}  {d.peak_window:12}  "
+                 f"{spot:22}  {d.confidence}")
+
+    pick = max(fc.days, key=lambda d: d.score)
+    L += ["",
+          f" PICK OF THE WEEK -> {('Today' if pick.is_today else pick.weekday + ' ' + pick.date)} "
+          f": {pick.verdict} ({pick.score:.2f})",
+          f"   {pick.best_spot.name} ({pick.best_spot.area}), {pick.best_dist_nm:.1f} nm "
+          f"{pick.best_heading}  |  peak bite {pick.peak_hour} (window {pick.peak_window})",
+          f"   SST {_n(pick.sst,' C')} · wind {_n(pick.wind_min,'')}-{_n(pick.wind_max,' km/h')} "
+          f"{compass(pick.wind_dir)} · swell {_n(pick.wave_max,' m')} · "
+          f"moon {pick.moon['phase']} {pick.moon['illumination_pct']}%",
+          _pattern_lines(pick),
+          "",
+          f"   bite curve {config.DAYLIGHT_HOURS.start:02d}h{'':2}{_spark(pick.curve)}"
+          f"{'':2}{config.DAYLIGHT_HOURS.stop - 1:02d}h",
+          "",
+          " Reminder: bluefin are regulated - verify season/quota/permit before keeping fish."]
+    return "\n".join(L)
+
+
+def render_hours(fc) -> str:
+    day = next((d for d in fc.days if d.is_today), fc.days[0] if fc.days else None)
+    if not day:
+        return "No hourly data available."
+    L = [f" TODAY'S BITE CURVE - {day.best_spot.name} ({day.best_dist_nm:.0f} nm {day.best_heading})",
+         f"   verdict {day.verdict} · peak {day.peak_hour} · window {day.peak_window}", ""]
+    peak_lo, peak_hi = (int(x[:2]) for x in day.peak_window.split("-"))
+    for h, s in day.curve:
+        bar = _SPARK[round(max(0.0, min(1.0, (s - 0.3) / 0.55)) * 7)] * max(1, round(s * 24))
+        flag = "  <-- peak window" if peak_lo <= h < peak_hi else ""
+        L.append(f"   {h:02d}:00  {s:.2f}  {bar}{flag}")
+    L.append("")
+    L.append(_pattern_lines(day))
+    return "\n".join(L)
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="tuna", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -229,6 +299,9 @@ def main(argv=None) -> int:
     p.add_argument("--home", default=None, metavar="LAT,LON",
                    help="override home port for this run")
     p.add_argument("--chl", action="store_true", help="try the chlorophyll bait source")
+    p.add_argument("--forecast", action="store_true", help="multi-day outlook + peak windows")
+    p.add_argument("--hours", action="store_true", help="today's hourly bite curve")
+    p.add_argument("--days", type=int, default=None, metavar="N", help="forecast horizon (days)")
     p.add_argument("--json", action="store_true", help="emit JSON")
     p.add_argument("--markdown", action="store_true", help="emit Markdown")
     p.add_argument("--version", action="version", version=f"tuna {__version__}")
@@ -245,6 +318,12 @@ def main(argv=None) -> int:
                              lat=lat, lon=lon,
                              max_range_km=args.range if args.range is not None
                              else base.max_range_km, note=base.note)
+
+    if args.forecast or args.hours:
+        from . import forecast as forecast_mod
+        fc = forecast_mod.build_forecast(days=args.days, home_override=home_override)
+        print(render_hours(fc) if args.hours else render_forecast(fc))
+        return 0
 
     rep = report_mod.build_report(enable_chl=True if args.chl else None,
                                   home_override=home_override)

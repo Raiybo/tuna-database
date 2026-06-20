@@ -80,6 +80,39 @@ PRIME_WINDOWS = ((5, 8), (18, 20))
 BLOWOUT_WIND_KMH = 35.0
 BLOWOUT_WAVE_M = 2.0
 
+# --- forecast (multi-day, hourly) ---------------------------------------------
+FORECAST_DAYS = 5
+DAYLIGHT_HOURS = range(4, 22)     # local hours evaluated for the bite curve
+
+# Time-of-day "feeding" score: prime light windows + solunar major/minor times.
+FEEDING_BASELINE = 0.30
+FEEDING_LIGHT_EDGE_H = 1.0        # taper this many hours outside a prime window
+FEEDING_SOLUNAR_MAJOR_H = 0.75   # within this of a major -> full strength
+FEEDING_SOLUNAR_MINOR_H = 0.75
+FEEDING_SOLUNAR_MINOR_STRENGTH = 0.70
+
+# Hourly model weights (adds a time-of-day 'feeding' factor; renormalised like WEIGHTS).
+WEIGHTS_HOURLY = {
+    "sst": 0.16,
+    "front": 0.11,
+    "bait": 0.12,
+    "current": 0.08,
+    "castability": 0.16,
+    "pressure": 0.09,
+    "solunar": 0.10,
+    "feeding": 0.18,
+}
+
+# A contiguous bite window = the run of hours whose score is within this of the peak.
+WINDOW_DROP = 0.06
+
+# Pattern detection: pre-frontal pressure-fall band (hPa / 3h).
+PRESSURE_FEED_LOW = -3.0
+PRESSURE_FEED_HIGH = -0.5
+
+# How recent a logged catch stays useful for pattern-learning (days).
+CATCH_MEMORY_DAYS = 400
+
 
 def rating(score: float) -> str:
     """Map a 0..1 suitability score to a label."""

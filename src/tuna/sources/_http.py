@@ -39,6 +39,13 @@ def get_json(url: str, retries: int = 3, timeout: int = 25) -> dict:
     return json.loads(get_text(url, retries, timeout))
 
 
+def post(url: str, data: bytes, headers: dict | None = None, timeout: int = 20):
+    """POST raw bytes (used by the notifier). Returns (status_code, body_text)."""
+    req = Request(url, data=data, headers=headers or {}, method="POST")
+    with urlopen(req, timeout=timeout, context=_SSL) as resp:
+        return resp.status, resp.read().decode("utf-8", "replace")
+
+
 def hour_index(times, label) -> int:
     """Index in an hourly time array matching a 'YYYY-MM-DDTHH:MM' label."""
     if not label or not times:

@@ -39,3 +39,30 @@ def fetch(lat: float, lon: float) -> dict:
         "pressure_trend": trend,
         "cloud": cur.get("cloud_cover"),
     }
+
+
+def fetch_series_multi(spots, days: int) -> list[dict]:
+    """Hourly wind/gust/dir/pressure/cloud for every spot over ``days`` days, in
+    ONE batched multi-location request. Returns a list aligned with ``spots``."""
+    lat = ",".join(f"{s.lat}" for s in spots)
+    lon = ",".join(f"{s.lon}" for s in spots)
+    url = (
+        f"{API}?latitude={lat}&longitude={lon}"
+        "&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,cloud_cover"
+        f"&timezone=auto&forecast_days={days}"
+    )
+    d = get_json(url)
+    if isinstance(d, dict):
+        d = [d]
+    out = []
+    for x in d:
+        h = x.get("hourly", {})
+        out.append({
+            "time": h.get("time", []),
+            "wind": h.get("wind_speed_10m", []),
+            "gust": h.get("wind_gusts_10m", []),
+            "wind_dir": h.get("wind_direction_10m", []),
+            "pressure": h.get("surface_pressure", []),
+            "cloud": h.get("cloud_cover", []),
+        })
+    return out

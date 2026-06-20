@@ -36,3 +36,29 @@ def fetch(lat: float, lon: float) -> dict:
         "hour_label": cur.get("time"),
         "utc_offset_sec": int(d.get("utc_offset_seconds", 0)),
     }
+
+
+def fetch_series_multi(spots, days: int) -> list[dict]:
+    """Hourly SST/wave/current for every spot over ``days`` days, in ONE batched
+    multi-location request. Returns a list aligned with ``spots``."""
+    lat = ",".join(f"{s.lat}" for s in spots)
+    lon = ",".join(f"{s.lon}" for s in spots)
+    url = (
+        f"{API}?latitude={lat}&longitude={lon}"
+        "&hourly=sea_surface_temperature,wave_height,ocean_current_velocity"
+        f"&timezone=auto&forecast_days={days}"
+    )
+    d = get_json(url)
+    if isinstance(d, dict):
+        d = [d]
+    out = []
+    for x in d:
+        h = x.get("hourly", {})
+        out.append({
+            "time": h.get("time", []),
+            "sst": h.get("sea_surface_temperature", []),
+            "wave": h.get("wave_height", []),
+            "current": h.get("ocean_current_velocity", []),
+            "offset": int(x.get("utc_offset_seconds", 0)),
+        })
+    return out

@@ -67,6 +67,11 @@ PYTHONPATH=src python3 -m tuna --all        # include spots beyond day range
 PYTHONPATH=src python3 -m tuna --json       # machine-readable
 PYTHONPATH=src python3 -m tuna --markdown   # Markdown (daily Action)
 
+# Forecast — which day is good, and the peak bite window
+PYTHONPATH=src python3 -m tuna --forecast        # next 5 days, peak windows, patterns
+PYTHONPATH=src python3 -m tuna --hours           # today's hourly bite curve
+PYTHONPATH=src python3 -m tuna --forecast --days 7
+
 # Map dashboard — serve from the repo root so it can read data/*.json
 python3 -m http.server 8000                 # open http://localhost:8000/web/
 
@@ -74,24 +79,62 @@ python3 -m http.server 8000                 # open http://localhost:8000/web/
 pip install -e ".[dev]" && pytest
 ```
 
+## Forecast, peak time & pattern recognition
+
+`tuna --forecast` pulls **hourly** marine + weather over the next several days (two batched
+requests) and scores **every daylight hour** with a time-of-day **feeding** factor — prime light
+windows (dawn/dusk) stacked with **solunar** majors/minors. For each day it picks the best
+*reachable* spot, the **peak bite window**, a verdict, and the **patterns** that line up:
+
+- **Thermal break active** — bait stacks on the SST seam
+- **Pre-frontal feed** — pressure easing before a change
+- **Solunar stack at light** — a moon major landing on dawn/dusk
+- **Productive water** — chlorophyll in the forage band
+- **Calm casting window** — low wind & swell at the peak
+- **Strong moon** — new/full peak energy
+
+**It learns from you.** Log trips in [`data/catches.json`](data/catches.json) (catches *and* blanks);
+when a day's conditions resemble your past hook-ups, a **"Matches your past catches"** pattern fires.
+Dormant until you have data — it never invents confidence it hasn't earned.
+
+## Phone notifications (the night before)
+
+[`tools/notify.py`](tools/notify.py) composes tomorrow's verdict + peak window and pushes it to your
+phone. Default channel is **[ntfy.sh](https://ntfy.sh)** (no account):
+
+1. Install the **ntfy** app, subscribe to a private topic name (e.g. `tuna-<something-random>`).
+2. Add repo secret **`NTFY_TOPIC`** (Settings → Secrets → Actions). Optional: `NTFY_SERVER`,
+   `NTFY_TOKEN` if you protect the topic. Telegram (`TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`) and
+   Pushover (`PUSHOVER_TOKEN`/`PUSHOVER_USER`) also work if set.
+3. [`.github/workflows/forecast-notify.yml`](.github/workflows/forecast-notify.yml) sends it each
+   evening (~18:00 Beirut). Test anytime from the Actions tab, or locally:
+
+```bash
+NTFY_TOPIC=your-topic PYTHONPATH=src python tools/notify.py --day tomorrow
+PYTHONPATH=src python tools/notify.py --dry-run    # compose without sending
+```
+
 ## Daily automation
 
 [`.github/workflows/daily-report.yml`](.github/workflows/daily-report.yml) regenerates
-`docs/today.md` every morning (~06:00 Beirut). Enable Actions to turn it on. (Pushing this file
-needs the `workflow` token scope — see commit notes.)
+`docs/today.md` + day image every morning (~06:00 Beirut); the evening workflow pushes the
+forecast. Enable Actions to turn them on. (Pushing workflow files needs the `workflow` token scope.)
 
 ## Project layout
 
 ```
-data/    home.json · spots.json · sightings.json        ← edit these
+data/    home.json · spots.json · sightings.json · catches.json   ← edit these
 src/tuna/
-  config.py        scoring thresholds & factor weights
-  scoring.py       pure factor scores + weighted blend
+  config.py        scoring thresholds, factor weights, hourly weights
+  scoring.py       pure factor scores, weighted blend, feeding-time score
   sources/         openmeteo_marine · openmeteo_weather · chlorophyll · solunar
   conditions.py    parallel multi-source gather + distance/bearing from home
   model.py         Conditions -> suitability score
   ocean.py         daily ocean summary + go/no-go verdict
+  forecast.py      multi-day hourly forecast + peak bite window
+  patterns.py      pattern recognition + learning from your catch log
   report.py        orchestrate · cli.py  the `tuna` command
+tools/   hotspots.py · day_image.py · notify.py (phone push)
 web/     interactive map dashboard (live, client-side)
 tests/   pytest unit tests
 ```

@@ -1,0 +1,34 @@
+{
+  "note": "Log every trip's result here - kept fish AND blanks. The pattern engine learns which conditions actually produce for YOU and flags days that match your past success. The more you log, the smarter the forecast. Your other repo can append to this file. Set \"example\": true on rows the engine should ignore.",
+  "schema": {
+    "date": "YYYY-MM-DD",
+    "result": "catch | blank",
+    "n": "number of fish (0 for a blank)",
+    "species": "bluefin | bonito | ...",
+    "spot_id": "id from spots.json (optional)",
+    "lat": "decimal degrees (optional)",
+    "lon": "decimal degrees (optional)",
+    "hour": "local hour you hooked up, 0-23 (optional)",
+    "sst_c": "water temp if known (optional)",
+    "wind_kmh": "wind if known (optional)",
+    "pressure_trend": "3h hPa trend if known (optional)",
+    "moon": "phase name if known (optional)",
+    "note": "free text - bait, method, etc."
+  },
+  "catches": [
+    {
+      "date": "2026-06-08",
+      "result": "catch",
+      "n": 1,
+      "species": "bluefin",
+      "spot_id": "beirut-canyon",
+      "hour": 6,
+      "sst_c": 24.8,
+      "wind_kmh": 10,
+      "pressure_trend": -0.8,
+      "moon": "Last Quarter",
+      "note": "EXAMPLE ROW - replace with your own. Dawn popper bite on the canyon edge.",
+      "example": true
+    }
+  ]
+}

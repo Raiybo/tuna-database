@@ -10,6 +10,7 @@ DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 SPOTS_FILE = DATA_DIR / "spots.json"
 HOME_FILE = DATA_DIR / "home.json"
 SIGHTINGS_FILE = DATA_DIR / "sightings.json"
+CATCHES_FILE = DATA_DIR / "catches.json"
 
 
 @dataclass
@@ -88,4 +89,28 @@ def load_sightings(path: Path | None = None) -> list[dict]:
         except (KeyError, ValueError):
             continue
         out.append({**s, "_dt": dt})
+    return out
+
+
+def load_catches(path: Path | None = None) -> list[dict]:
+    """Return logged catches with a parsed UTC datetime in ``_dt``.
+
+    Each row records the conditions you caught (or blanked) under so the pattern
+    layer can learn what actually works locally. Rows flagged ``"example": true``
+    are skipped. Schema is documented in data/catches.json. Missing file -> [].
+    """
+    path = Path(path) if path else CATCHES_FILE
+    if not path.exists():
+        return []
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    out: list[dict] = []
+    for c in raw.get("catches", []):
+        if c.get("example"):
+            continue
+        try:
+            dt = datetime.strptime(c["date"], "%Y-%m-%d").replace(
+                hour=12, tzinfo=timezone.utc)
+        except (KeyError, ValueError):
+            continue
+        out.append({**c, "_dt": dt})
     return out
