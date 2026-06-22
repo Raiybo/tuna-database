@@ -289,7 +289,51 @@ def render_hours(fc) -> str:
     return "\n".join(L)
 
 
+def _cmd_log(argv) -> int:
+    from . import learn
+    p = argparse.ArgumentParser(prog="tuna log", description="Log a trip result.")
+    g = p.add_mutually_exclusive_group(required=True)
+    g.add_argument("--catch", type=int, metavar="N", help="caught N fish")
+    g.add_argument("--blank", action="store_true", help="a blank (no fish)")
+    p.add_argument("--spot", help="spot id from spots.json")
+    p.add_argument("--lat", type=float)
+    p.add_argument("--lon", type=float)
+    p.add_argument("--hour", type=int, help="local hour you hooked up (0-23)")
+    p.add_argument("--species", default="bluefin")
+    p.add_argument("--sst", type=float, dest="sst_c")
+    p.add_argument("--wind", type=float, dest="wind_kmh")
+    p.add_argument("--pressure-trend", type=float, dest="pressure_trend")
+    p.add_argument("--moon")
+    p.add_argument("--date")
+    p.add_argument("--note")
+    a = p.parse_args(argv)
+    rec = learn.new_record(
+        result="catch" if a.catch is not None else "blank",
+        n=a.catch if a.catch is not None else 0,
+        spot_id=a.spot, lat=a.lat, lon=a.lon, hour=a.hour, species=a.species,
+        sst_c=a.sst_c, wind_kmh=a.wind_kmh, pressure_trend=a.pressure_trend,
+        moon=a.moon, note=a.note, day=a.date)
+    learn.append_catch(rec)
+    print(f"Logged: {rec['date']} {rec['result']} "
+          f"({rec.get('n', 0)} {rec.get('species', '')}) at {a.spot or a.lat}")
+    print("\n" + learn.summary())
+    return 0
+
+
+def _cmd_learn(_argv) -> int:
+    from . import learn
+    print(learn.summary())
+    return 0
+
+
 def main(argv=None) -> int:
+    import sys
+    raw = sys.argv[1:] if argv is None else argv
+    if raw and raw[0] == "log":
+        return _cmd_log(raw[1:])
+    if raw and raw[0] == "learn":
+        return _cmd_learn(raw[1:])
+
     p = argparse.ArgumentParser(prog="tuna", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--all", action="store_true", help="include spots beyond day range")

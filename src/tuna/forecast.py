@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from . import conditions as conditions_mod
-from . import config, patterns, scoring
+from . import config, patterns, scoring, seasonality
 from .sources import openmeteo_marine, openmeteo_weather
 from .sources import solunar as solunar_mod
 from .spots import Home, Spot, load_catches, load_home, load_spots
@@ -143,6 +143,7 @@ def build_forecast(days: int | None = None, home_override: Home | None = None) -
     out_days = []
     for date in dates:
         sol = _solunar_for(date, home.lon, offset)
+        seasonal = seasonality.month_score(date)
 
         # representative midday SST per spot -> daily thermal-front field
         rep_sst = []
@@ -166,6 +167,7 @@ def build_forecast(days: int | None = None, home_override: Home | None = None) -
                     "pressure": scoring.pressure_score(rec["trend"]),
                     "solunar": sol["day_score"],
                     "feeding": scoring.feeding_time_score(hourf, sol),
+                    "seasonal": seasonal,
                 }
                 sc, _ = scoring.combine_weighted(factors, config.WEIGHTS_HOURLY)
                 curve.append((hourf, sc, rec))

@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from . import conditions as conditions_mod
-from . import model, ocean, scoring
+from . import model, ocean, scoring, seasonality
 from .conditions import Conditions
 from .sources import solunar as solunar_mod
 from .spots import Home, Spot, load_home, load_sightings, load_spots
@@ -38,10 +38,13 @@ def build_report(enable_chl: bool | None = None,
                    if c.marine.get("utc_offset_sec") is not None), 7200)
     now = datetime.now(timezone.utc)
     sol = solunar_mod.solunar(now, home.lon, offset)
+    local = now + timedelta(seconds=offset)
+    seasonal = seasonality.month_score(local.month)
 
     reports = []
     for spot, cond, front in zip(spots, conds, fronts):
-        sc = model.score(spot, cond, front, sol["day_score"], sightings, now)
+        sc = model.score(spot, cond, front, sol["day_score"], sightings, now,
+                         seasonal_score=seasonal)
         reports.append(SpotReport(spot, cond, sc))
     reports.sort(key=lambda r: r.score.total, reverse=True)
 

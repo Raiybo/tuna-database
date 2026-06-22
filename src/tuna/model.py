@@ -18,7 +18,7 @@ class SpotScore:
 
 
 def score(spot: Spot, cond: Conditions, front_score: float,
-          solunar_score: float, sightings, now) -> SpotScore:
+          solunar_score: float, sightings, now, seasonal_score: float | None = None) -> SpotScore:
     m, w = cond.marine, cond.weather
 
     factors = {
@@ -30,6 +30,7 @@ def score(spot: Spot, cond: Conditions, front_score: float,
         "castability": scoring.castability_score(m.get("wave"), w.get("wind_kmh")),
         "pressure": scoring.pressure_score(w.get("pressure_trend")),
         "solunar": solunar_score,
+        "seasonal": seasonal_score,
     }
     base, contrib = scoring.combine_weighted(factors)
     boost = scoring.sighting_boost(spot.lat, spot.lon, sightings, now)

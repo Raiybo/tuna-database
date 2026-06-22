@@ -97,6 +97,37 @@ windows (dawn/dusk) stacked with **solunar** majors/minors. For each day it pick
 when a day's conditions resemble your past hook-ups, a **"Matches your past catches"** pattern fires.
 Dormant until you have data — it never invents confidence it hasn't earned.
 
+## Finding the fish — gridded, multi-signal (the spatial engine)
+
+[`finder.py`](src/tuna/finder.py) (run by [`tools/hotspots.py`](tools/hotspots.py)) reads the actual
+ocean **structure** within range of your marina instead of ranking fixed marks. It scores every water
+cell on the features that concentrate bait — all **free / no-key**:
+
+- **SST fronts** — **1 km MUR** thermal-gradient edges (sharp), fallback CoralTemp 5 km
+- **Chlorophyll** — productive **anomaly** vs the regional median + colour **edges** (NOAA VIIRS)
+- **Current edges** — vector **shear/convergence** between current cells (Open-Meteo)
+- **Structure** — shelf break / depth gradient (ETOPO 2022), with a hard land/shallow mask
+
+Each hotspot carries a **confidence from multi-signal agreement** (counted by independent *source* —
+SST, chlorophyll, current, structure — so it isn't inflated by one feed). A spot where three sources
+line up is far more trustworthy than one. Output (`data/hotspots.json`) plots on the map as 🎯 markers
+with coordinates. It's a prediction of **where to look** — confirm with diving birds on the water.
+
+A **seasonality prior** ([`seasonality.py`](src/tuna/seasonality.py)) for Eastern-Med bluefin folds the
+month-of-year into the day verdict (peak in summer, off in winter).
+
+## Learn from your logbook
+
+```bash
+tuna log --catch 2 --spot beirut-canyon --hour 6      # log a 2-fish dawn
+tuna log --blank --spot tabarja --hour 7              # log a blank (just as important)
+tuna learn                                            # hit-rate + what separates catches from blanks
+```
+
+Catches *and* blanks let the model calibrate to **your** water. Optional: set a free **`GFW_TOKEN`** to
+light up a **fishing-fleet activity** layer ([`sources/ais.py`](src/tuna/sources/ais.py)) — where the
+commercial fleet works is real, observed evidence of fish.
+
 ## Phone notifications (the night before)
 
 [`tools/notify.py`](tools/notify.py) composes tomorrow's verdict + peak window and pushes it to your
@@ -125,16 +156,19 @@ forecast. Enable Actions to turn them on. (Pushing workflow files needs the `wor
 ```
 data/    home.json · spots.json · sightings.json · catches.json   ← edit these
 src/tuna/
-  config.py        scoring thresholds, factor weights, hourly weights
+  config.py        scoring thresholds, factor weights, finder weights
   scoring.py       pure factor scores, weighted blend, feeding-time score
-  sources/         openmeteo_marine · openmeteo_weather · chlorophyll · solunar
+  sources/         openmeteo_marine · openmeteo_weather · chlorophyll · solunar · ais (GFW)
   conditions.py    parallel multi-source gather + distance/bearing from home
   model.py         Conditions -> suitability score
   ocean.py         daily ocean summary + go/no-go verdict
   forecast.py      multi-day hourly forecast + peak bite window
+  finder.py        gridded multi-signal fish-finder (SST/chl/current/structure)
+  seasonality.py   Eastern-Med bluefin month-of-year prior
   patterns.py      pattern recognition + learning from your catch log
+  learn.py         logbook validation (tuna log / tuna learn)
   report.py        orchestrate · cli.py  the `tuna` command
-tools/   hotspots.py · day_image.py · notify.py (phone push)
+tools/   hotspots.py (runs finder) · day_image.py · notify.py (phone push)
 web/     interactive map dashboard (live, client-side)
 tests/   pytest unit tests
 ```

@@ -59,13 +59,14 @@ FRONT_BASELINE = 0.3
 
 # --- how much each live factor contributes (renormalised over available ones) ---
 WEIGHTS = {
-    "sst": 0.22,
-    "front": 0.13,
-    "bait": 0.15,         # chlorophyll; omitted when disabled/stale
-    "current": 0.10,
-    "castability": 0.17,
-    "pressure": 0.10,
-    "solunar": 0.13,
+    "sst": 0.20,
+    "front": 0.12,
+    "bait": 0.14,         # chlorophyll; omitted when disabled/stale
+    "current": 0.09,
+    "castability": 0.16,
+    "pressure": 0.09,
+    "solunar": 0.10,
+    "seasonal": 0.10,     # month-of-year bluefin presence prior (Eastern Med)
 }
 
 # --- recent real sightings boost a spot on top of the modelled score ---
@@ -93,14 +94,15 @@ FEEDING_SOLUNAR_MINOR_STRENGTH = 0.70
 
 # Hourly model weights (adds a time-of-day 'feeding' factor; renormalised like WEIGHTS).
 WEIGHTS_HOURLY = {
-    "sst": 0.16,
-    "front": 0.11,
-    "bait": 0.12,
-    "current": 0.08,
-    "castability": 0.16,
-    "pressure": 0.09,
-    "solunar": 0.10,
-    "feeding": 0.18,
+    "sst": 0.15,
+    "front": 0.10,
+    "bait": 0.11,
+    "current": 0.07,
+    "castability": 0.15,
+    "pressure": 0.08,
+    "solunar": 0.09,
+    "feeding": 0.15,
+    "seasonal": 0.10,
 }
 
 # A contiguous bite window = the run of hours whose score is within this of the peak.
@@ -112,6 +114,31 @@ PRESSURE_FEED_HIGH = -0.5
 
 # How recent a logged catch stays useful for pattern-learning (days).
 CATCH_MEMORY_DAYS = 400
+
+# --- gridded fish-finder (finder.py) ------------------------------------------
+FINDER_SEARCH_KM = 24.0         # scan radius from the marina
+FINDER_GRAD_KM = 4.0            # neighbourhood for front / gradient calcs
+FINDER_MAX_CELLS = 150          # cap scored cells (keeps API calls sane / free)
+FINDER_N_HOTSPOTS = 8
+FINDER_MIN_SEP_KM = 3.5         # de-cluster spacing between hotspots
+FINDER_MIN_DEPTH_M = 30.0       # require real offshore water (never land/shoal)
+
+# Normalisers: signal value that maps to a full 1.0 score.
+SST_FRONT_NORM = 0.12           # deg C across the gradient neighbourhood
+CHL_FRONT_NORM = 0.10           # mg/m^3 across the neighbourhood
+CHL_ANOM_NORM = 0.6             # fractional chlorophyll anomaly vs local median
+CONVERGENCE_NORM = 0.8          # current convergence (km/h per neighbourhood)
+STRUCTURE_NORM = 120.0          # depth change (m) across the neighbourhood = shelf break
+
+# Per-cell fish-likelihood weights (spatial signals only; renormalised).
+FINDER_WEIGHTS = {
+    "sst_front": 0.32,
+    "convergence": 0.22,
+    "chl_anom": 0.16,
+    "chl_front": 0.16,
+    "structure": 0.14,
+}
+FINDER_STRONG = 0.60            # a signal at/above this "agrees"; >=3 agree = High confidence
 
 
 def rating(score: float) -> str:
