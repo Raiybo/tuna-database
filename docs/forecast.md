@@ -2,10 +2,10 @@
 
 | Day | Verdict | Score | Peak window | Best spot | Conf |
 |---|---|--:|---|---|---|
-| Today | TOUGH | 0.86 | 19:00-22:00 | Batroun Drop 19nm N | Low |
-| Sat 06-27 | GO | 0.87 | 04:00-09:00 | Batroun Drop 19nm N | Low |
-| Sun 06-28 | GO | 0.87 | 17:00-21:00 | Damour Banks 18nm SW | High |
-| Mon 06-29 | GO | 0.85 | 18:00-21:00 | Tabarja Deep 5nm NW | High |
-| Tue 06-30 | GO | 0.86 | 05:00-09:00 | Batroun Drop 19nm N | Moderate |
+| Today | GO | 0.81 | 16:00-21:00 | Batroun Drop 19nm N | Moderate |
+| Sun 06-28 | GO | 0.87 | 17:00-21:00 | Tabarja Deep 5nm NW | High |
+| Mon 06-29 | GO | 0.86 | 18:00-21:00 | Tabarja Deep 5nm NW | High |
+| Tue 06-30 | GO | 0.83 | 18:00-21:00 | Damour Banks 18nm SW | High |
+| Wed 07-01 | GO | 0.87 | 18:00-21:00 | Beirut Canyon Edge 11nm WSW | High |
 
-**Heads-up (Sat 2026-06-27):** GO - peak 04:00-09:00 at Batroun Drop. Patterns: Thermal break active, Strong moon.
+**Heads-up (Sun 2026-06-28):** GO - peak 17:00-21:00 at Tabarja Deep. Patterns: Thermal break active, Pre-frontal feed, Productive water, Calm casting window, Strong moon.
