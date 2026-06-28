@@ -1,172 +1,164 @@
 {
  "home": "Marina Baye, Dbayeh",
- "generated_utc_date": "2026-06-25",
- "sst_source": "MUR 1km 2026-06-25",
- "chl_source": "VIIRS daily 2026-06-16",
- "cells_scored": 145,
+ "generated_utc_date": "2026-06-26",
+ "sst_source": "CoralTemp 5km 2026-06-26",
+ "chl_source": "VIIRS daily 2026-06-17",
+ "cells_scored": 32,
  "season": "peak season",
  "season_score": 0.95,
  "note": "Multi-signal bait-likelihood (SST front x chlorophyll x current edge x structure). Confidence = how many signals agree. Prediction of where to look, NOT a fish detector - confirm with diving birds on the water.",
  "hotspots": [
   {
-   "lat": 33.83,
-   "lon": 35.41,
-   "score": 0.856,
-   "confidence": "Moderate",
-   "agree": 2,
+   "lat": 33.825,
+   "lon": 35.425,
+   "score": 0.5,
+   "confidence": "Low",
+   "agree": 1,
    "signals": {
-    "sst_front": 1.0,
-    "convergence": 0.44,
+    "sst_front": 0.0,
     "chl_anom": 1.0,
     "chl_front": 1.0
    },
-   "sst_c": 26.3,
+   "sst_c": 26.4,
    "chl": 0.44,
-   "current_kmh": 1.9,
-   "depth_m": null,
-   "dist_nm": 11.0,
-   "heading": "SW",
-   "why": "SST front 0.16C, chl rich 0.44"
-  },
-  {
-   "lat": 33.91,
-   "lon": 35.44,
-   "score": 0.81,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 1.0,
-    "convergence": 0.26,
-    "chl_anom": 1.0,
-    "chl_front": 1.0
-   },
-   "sst_c": 26.5,
-   "chl": 0.36,
-   "current_kmh": 1.8,
-   "depth_m": null,
-   "dist_nm": 7.6,
-   "heading": "WSW",
-   "why": "SST front 0.14C, chl rich 0.36"
-  },
-  {
-   "lat": 33.88,
-   "lon": 35.42,
-   "score": 0.802,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 1.0,
-    "convergence": 0.23,
-    "chl_anom": 1.0,
-    "chl_front": 1.0
-   },
-   "sst_c": 26.3,
-   "chl": 0.5,
-   "current_kmh": 1.8,
-   "depth_m": null,
-   "dist_nm": 9.1,
-   "heading": "WSW",
-   "why": "SST front 0.16C, chl rich 0.50"
-  },
-  {
-   "lat": 34.13,
-   "lon": 35.59,
-   "score": 0.799,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 0.51,
-    "convergence": 0.98,
-    "chl_anom": 0.92,
-    "chl_front": 1.0
-   },
-   "sst_c": 26.5,
-   "chl": 0.31,
    "current_kmh": 1.0,
    "depth_m": null,
-   "dist_nm": 11.7,
-   "heading": "N",
-   "why": "current edge, chl rich 0.31"
+   "dist_nm": 10.5,
+   "heading": "SW",
+   "why": "chl rich 0.44"
   },
   {
-   "lat": 33.9,
-   "lon": 35.39,
-   "score": 0.773,
-   "confidence": "Moderate",
-   "agree": 2,
+   "lat": 33.875,
+   "lon": 35.475,
+   "score": 0.5,
+   "confidence": "Low",
+   "agree": 1,
    "signals": {
-    "sst_front": 1.0,
-    "convergence": 0.11,
+    "sst_front": 0.0,
     "chl_anom": 1.0,
     "chl_front": 1.0
    },
-   "sst_c": 26.1,
-   "chl": 0.41,
-   "current_kmh": 2.1,
+   "sst_c": 26.5,
+   "chl": 1.32,
+   "current_kmh": 1.4,
    "depth_m": null,
-   "dist_nm": 10.2,
+   "dist_nm": 6.8,
    "heading": "WSW",
-   "why": "SST front 0.12C, chl rich 0.41"
+   "why": "chl rich 1.32"
   },
   {
-   "lat": 33.8,
-   "lon": 35.43,
-   "score": 0.754,
-   "confidence": "Moderate",
-   "agree": 2,
+   "lat": 33.925,
+   "lon": 35.475,
+   "score": 0.5,
+   "confidence": "Low",
+   "agree": 1,
    "signals": {
-    "sst_front": 0.92,
-    "convergence": 0.15,
+    "sst_front": 0.0,
     "chl_anom": 1.0,
     "chl_front": 1.0
    },
    "sst_c": 26.5,
-   "chl": 0.48,
-   "current_kmh": 1.3,
+   "chl": 0.45,
+   "current_kmh": 1.7,
    "depth_m": null,
-   "dist_nm": 11.4,
-   "heading": "SW",
-   "why": "SST front 0.11C, chl rich 0.48"
-  },
-  {
-   "lat": 33.85,
-   "lon": 35.45,
-   "score": 0.748,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 0.87,
-    "convergence": 0.2,
-    "chl_anom": 1.0,
-    "chl_front": 1.0
-   },
-   "sst_c": 26.5,
-   "chl": 0.61,
-   "current_kmh": 1.8,
-   "depth_m": null,
-   "dist_nm": 8.6,
-   "heading": "SW",
-   "why": "SST front 0.10C, chl rich 0.61"
-  },
-  {
-   "lat": 33.96,
-   "lon": 35.38,
-   "score": 0.73,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 0.96,
-    "convergence": 0.0,
-    "chl_anom": 1.0,
-    "chl_front": 1.0
-   },
-   "sst_c": 26.1,
-   "chl": 0.35,
-   "current_kmh": 2.1,
-   "depth_m": null,
-   "dist_nm": 10.6,
+   "dist_nm": 5.8,
    "heading": "W",
-   "why": "SST front 0.12C, chl rich 0.35"
+   "why": "chl rich 0.45"
+  },
+  {
+   "lat": 33.925,
+   "lon": 35.525,
+   "score": 0.5,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "chl_anom": 1.0,
+    "chl_front": 1.0
+   },
+   "sst_c": 26.5,
+   "chl": 0.9,
+   "current_kmh": 1.0,
+   "depth_m": null,
+   "dist_nm": 3.3,
+   "heading": "W",
+   "why": "chl rich 0.90"
+  },
+  {
+   "lat": 33.925,
+   "lon": 35.575,
+   "score": 0.5,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "chl_anom": 1.0,
+    "chl_front": 1.0
+   },
+   "sst_c": 26.5,
+   "chl": 2.19,
+   "current_kmh": 1.0,
+   "depth_m": null,
+   "dist_nm": 1.0,
+   "heading": "SW",
+   "why": "chl rich 2.19"
+  },
+  {
+   "lat": 33.975,
+   "lon": 35.525,
+   "score": 0.5,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "chl_anom": 1.0,
+    "chl_front": 1.0
+   },
+   "sst_c": 26.5,
+   "chl": 0.43,
+   "current_kmh": 1.0,
+   "depth_m": null,
+   "dist_nm": 4.0,
+   "heading": "NW",
+   "why": "chl rich 0.43"
+  },
+  {
+   "lat": 33.975,
+   "lon": 35.575,
+   "score": 0.5,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "chl_anom": 1.0,
+    "chl_front": 1.0
+   },
+   "sst_c": 26.5,
+   "chl": 0.68,
+   "current_kmh": 1.0,
+   "depth_m": null,
+   "dist_nm": 2.5,
+   "heading": "NNW",
+   "why": "chl rich 0.68"
+  },
+  {
+   "lat": 34.025,
+   "lon": 35.575,
+   "score": 0.5,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "chl_anom": 1.0,
+    "chl_front": 1.0
+   },
+   "sst_c": 26.4,
+   "chl": 0.49,
+   "current_kmh": 1.2,
+   "depth_m": null,
+   "dist_nm": 5.5,
+   "heading": "N",
+   "why": "chl rich 0.49"
   }
  ]
 }
