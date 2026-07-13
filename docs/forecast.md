@@ -2,10 +2,10 @@
 
 | Day | Verdict | Score | Peak window | Best spot | Conf |
 |---|---|--:|---|---|---|
-| Today | GO | 0.85 | 18:00-21:00 | Beirut Canyon Edge 11nm WSW | High |
-| Mon 07-13 | GO | 0.85 | 17:00-21:00 | Beirut Canyon Edge 11nm WSW | High |
-| Tue 07-14 | GO | 0.80 | 18:00-21:00 | Beirut Canyon Edge 11nm WSW | High |
-| Wed 07-15 | GO | 0.79 | 05:00-09:00 | Batroun Drop 19nm N | Moderate |
-| Thu 07-16 | GO | 0.79 | 05:00-09:00 | Beirut Canyon Edge 11nm WSW | Moderate |
+| Today | GO | 0.84 | 18:00-21:00 | Beirut Canyon Edge 11nm WSW | High |
+| Tue 07-14 | GO | 0.82 | 18:00-21:00 | Beirut Canyon Edge 11nm WSW | High |
+| Wed 07-15 | GO | 0.87 | 05:00-09:00 | Damour Banks 18nm SW | High |
+| Thu 07-16 | GO | 0.81 | 05:00-09:00 | Beirut Canyon Edge 11nm WSW | High |
+| Fri 07-17 | GO | 0.80 | 04:00-10:00 | Beirut Canyon Edge 11nm WSW | High |
 
-**Heads-up (Mon 2026-07-13):** GO - peak 17:00-21:00 at Beirut Canyon Edge. Patterns: Thermal break active, Pre-frontal feed, Calm casting window, Strong moon.
+**Heads-up (Tue 2026-07-14):** GO - peak 18:00-21:00 at Beirut Canyon Edge. Patterns: Productive water, Calm casting window, Strong moon.
