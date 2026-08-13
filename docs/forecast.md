@@ -2,10 +2,10 @@
 
 | Day | Verdict | Score | Peak window | Best spot | Conf |
 |---|---|--:|---|---|---|
-| Today | GO | 0.79 | 17:00-21:00 | Byblos Outer 11nm N | High |
-| Thu 08-13 | GO | 0.78 | 05:00-09:00 | Byblos Outer 11nm N | High |
-| Fri 08-14 | GO | 0.78 | 05:00-09:00 | Tabarja Deep 5nm NW | High |
-| Sat 08-15 | GO | 0.78 | 18:00-21:00 | Tabarja Deep 5nm NW | High |
-| Sun 08-16 | GO | 0.78 | 14:00-17:00 | Tabarja Deep 5nm NW | High |
+| Today | GO | 0.77 | 05:00-09:00 | Damour Banks 18nm SW | High |
+| Fri 08-14 | TOUGH | 0.76 | 05:00-09:00 | Damour Banks 18nm SW | High |
+| Sat 08-15 | TOUGH | 0.76 | 18:00-21:00 | Damour Banks 18nm SW | Moderate |
+| Sun 08-16 | GO | 0.74 | 04:00-09:00 | Damour Banks 18nm SW | Moderate |
+| Mon 08-17 | GO | 0.76 | 04:00-09:00 | Damour Banks 18nm SW | Low |
 
-**Heads-up (Thu 2026-08-13):** GO - peak 05:00-09:00 at Byblos Outer. Patterns: Pre-frontal feed, Productive water, Calm casting window, Strong moon.
+**Heads-up (Fri 2026-08-14):** TOUGH - peak 05:00-09:00 at Damour Banks. Patterns: Pre-frontal feed, Calm casting window, Strong moon.
