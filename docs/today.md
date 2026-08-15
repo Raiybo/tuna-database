@@ -1,29 +1,29 @@
-# Tuna day sheet - 2026-08-14T07:45 (Asia/Beirut)
+# Tuna day sheet - 2026-08-15T06:30 (Asia/Beirut)
 
 **From Marina Baye, Dbayeh** (33.935, 35.590, range 40 km)
 
-## VERDICT: DECENT - 14-34 km/h SSW wind, 0.7-1.0 m swell, water 29.3 C
+## VERDICT: TOUGH - blown out - wind to 39 km/h, swell to 1.1 m
 
 | Ocean | |
 |---|---|
-| Sea temp | 29.1 C-29.5 C (avg 29.3) |
-| Swell | 0.7 m-1.0 m |
-| Wind | 14.3 km/h-34.0 km/h SSW |
-| Pressure | 1006.0 hPa, steady (-0.3/3h) |
-| Current | ~1.5 km/h |
-| Moon | New Moon, 1% |
-| Solunar majors | 13:20 / 01:20 (approx) |
+| Sea temp | 29.0 C-29.3 C (avg 29.2) |
+| Swell | 0.8 m-1.1 m |
+| Wind | 11.8 km/h-38.9 km/h SSW |
+| Pressure | 1005.9 hPa, steady (+0.5/3h) |
+| Current | ~1.9 km/h |
+| Moon | New Moon, 4% |
+| Solunar majors | 14:07 / 02:07 (approx) |
 
 ## Where to go (within range, best first)
 
 | # | Rating | Score | Dist | Head | SST | Wind | Spot | Coordinates |
 |--:|:--|--:|--:|:--|--:|--:|:--|:--|
-| 1 | GOOD | 0.67 | 18.5 nm | SW | 29.3 C | 14.3 km/h | Damour Banks (Khalde / Damour) | 33.700, 35.350 |
-| 2 | GOOD | 0.60 | 11.3 nm | N | 29.4 C | 26.2 km/h | Byblos Outer (Jbeil / Byblos) | 34.120, 35.550 |
-| 3 | GOOD | 0.60 | 5.2 nm | NW | 29.5 C | 25.3 km/h | Tabarja Deep (Jounieh / Tabarja) | 34.000, 35.520 |
-| 4 | GOOD | 0.58 | 19.0 nm | N | 29.3 C | 34.0 km/h | Batroun Drop (Batroun) | 34.250, 35.550 |
-| 5 | GOOD | 0.58 | 11.0 nm | WSW | 29.1 C | 30.8 km/h | Beirut Canyon Edge (Beirut / Raouche) | 33.880, 35.380 |
+| 1 | GOOD | 0.70 | 11.0 nm | WSW | 29.0 C | 27.3 km/h | Beirut Canyon Edge (Beirut / Raouche) | 33.880, 35.380 |
+| 2 | GOOD | 0.66 | 18.5 nm | SW | 29.2 C | 11.8 km/h | Damour Banks (Khalde / Damour) | 33.700, 35.350 |
+| 3 | GOOD | 0.65 | 19.0 nm | N | 29.1 C | 38.9 km/h | Batroun Drop (Batroun) | 34.250, 35.550 |
+| 4 | GOOD | 0.62 | 11.3 nm | N | 29.2 C | 27.7 km/h | Byblos Outer (Jbeil / Byblos) | 34.120, 35.550 |
+| 5 | FAIR | 0.54 | 5.2 nm | NW | 29.3 C | 23.1 km/h | Tabarja Deep (Jounieh / Tabarja) | 34.000, 35.520 |
 
-**Best bet:** Damour Banks - 18.5 nm bearing 220 (SW). Fish the outflow plume edge; better on a light onshore drift.
+**Best bet:** Beirut Canyon Edge - 11.0 nm bearing 253 (WSW). Top zone on a thermal break. Cast the warm/cold seam; look for diving birds off Raouche.
 
 > Search zones, not guaranteed marks. Bluefin are regulated - check Lebanese / ICCAT season, quota and permits before targeting them.
