@@ -2,10 +2,10 @@
 
 | Day | Verdict | Score | Peak window | Best spot | Conf |
 |---|---|--:|---|---|---|
-| Today | GO | 0.79 | 16:00-21:00 | Batroun Drop 19nm N | Moderate |
-| Wed 08-19 | GO | 0.74 | 17:00-21:00 | Batroun Drop 19nm N | High |
-| Thu 08-20 | GO | 0.72 | 18:00-21:00 | Damour Banks 18nm SW | High |
-| Fri 08-21 | GO | 0.72 | 18:00-21:00 | Batroun Drop 19nm N | High |
-| Sat 08-22 | GO | 0.74 | 18:00-22:00 | Damour Banks 18nm SW | High |
+| Today | GO | 0.78 | 05:00-09:00 | Tabarja Deep 5nm NW | High |
+| Thu 08-20 | GO | 0.75 | 05:00-09:00 | Tabarja Deep 5nm NW | High |
+| Fri 08-21 | GO | 0.75 | 05:00-09:00 | Tabarja Deep 5nm NW | High |
+| Sat 08-22 | GO | 0.76 | 18:00-22:00 | Tabarja Deep 5nm NW | High |
+| Sun 08-23 | GO | 0.76 | 18:00-22:00 | Tabarja Deep 5nm NW | High |
 
-**Heads-up (Wed 2026-08-19):** GO - peak 17:00-21:00 at Batroun Drop. Patterns: Pre-frontal feed, Solunar stack at light, Calm casting window.
+**Heads-up (Thu 2026-08-20):** GO - peak 05:00-09:00 at Tabarja Deep. Patterns: Solunar stack at light, Productive water, Calm casting window.
