@@ -30,10 +30,19 @@ PFEG = "https://coastwatch.pfeg.noaa.gov/erddap"
 OWATCH = "https://oceanwatch.pifsc.noaa.gov/erddap"
 
 
-def _erddap_grid(host, dataset, var, has_alt, lat0, lat1, lon0, lon1, timeout=70):
+def _erddap_grid(host, dataset, var, has_alt, lat0, lat1, lon0, lon1, timeout=70,
+                 has_time=True, stride=None):
+    """Pull an ERDDAP griddap slab as [{lat, lon, val}], plus its date.
+
+    Not every griddap dataset has a time axis - static bathymetry (ETOPO) is
+    lat/lon only, and asking it for ``[(last)]`` is a hard HTTP 400. ``stride``
+    subsamples a fine grid server-side so a dense product stays a small download.
+    """
     alt = "%5B0%5D" if has_alt else ""
-    url = (f"{host}/griddap/{dataset}.csv?{var}%5B(last)%5D{alt}"
-           f"%5B({lat0}):({lat1})%5D%5B({lon0}):({lon1})%5D")
+    time_idx = "%5B(last)%5D" if has_time else ""
+    step = f":{int(stride)}" if stride and stride > 1 else ""
+    url = (f"{host}/griddap/{dataset}.csv?{var}{time_idx}{alt}"
+           f"%5B({lat0}){step}:({lat1})%5D%5B({lon0}){step}:({lon1})%5D")
     lines = get_text(url, retries=2, timeout=timeout).strip().splitlines()
     cols = lines[0].split(",")
     li, oi, vi = cols.index("latitude"), cols.index("longitude"), len(cols) - 1
@@ -49,7 +58,8 @@ def _erddap_grid(host, dataset, var, has_alt, lat0, lat1, lon0, lon1, timeout=70
             continue
         if math.isnan(v):
             continue
-        date = f[0][:10]
+        if has_time:
+            date = f[0][:10]
         pts.append({"lat": float(f[li]), "lon": float(f[oi]), "val": v})
     return date, pts
 
@@ -78,8 +88,14 @@ def _fetch_chl(b):
 
 
 def _fetch_depth(b):
+    """Seabed depth (ETOPO 2022, 15 arc-sec ~ 460 m). Static grid: no time axis.
+
+    Strided to ~1.9 km, which still resolves the shelf break across the
+    FINDER_GRAD_KM neighbourhood while keeping the download ~30 KB.
+    """
     try:
-        _, p = _erddap_grid(OWATCH, "ETOPO_2022_v1_15s", "z", False, *b)
+        _, p = _erddap_grid(OWATCH, "ETOPO_2022_v1_15s", "z", False, *b,
+                            has_time=False, stride=4)
         return p
     except Exception:
         return []

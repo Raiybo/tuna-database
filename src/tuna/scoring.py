@@ -66,6 +66,35 @@ def castability_score(wave, wind):
     return round(config.CAST_WAVE_W * ws + config.CAST_WIND_W * nd, 4)
 
 
+def thermal_access_score(sst, day_min, day_max):
+    """0..1: how likely bluefin are working the SURFACE at this hour.
+
+    Bluefin are endothermic and avoid water warm enough to cap their metabolic
+    performance. Below ``THERMAL_STRESS_C`` the whole day is fair game and this
+    returns 1.0. Above it they thermoregulate below the mixed layer through the
+    heat of the day and push back up at the cool edges, so the score tracks how
+    close this hour's surface temperature sits to the day's coolest - the hotter
+    the water, the more the bite collapses onto that cool edge.
+
+    ``day_min``/``day_max`` are the surface swing over the same day at the same
+    spot. Returns None when SST is unknown, so the factor drops out of the blend.
+    """
+    if sst is None:
+        return None
+    over = (sst - config.THERMAL_STRESS_C) / config.THERMAL_STRESS_SPAN
+    heat = max(0.0, min(1.0, over))
+    if heat <= 0.0:
+        return 1.0
+    floor = config.THERMAL_HOT_FLOOR
+    if day_min is None or day_max is None or (day_max - day_min) < 0.05:
+        # no resolvable diurnal swing: apply the heat penalty flat
+        coolness = 0.5
+    else:
+        coolness = max(0.0, min(1.0, (day_max - sst) / (day_max - day_min)))
+    access = floor + (1.0 - floor) * coolness
+    return round(1.0 - heat * (1.0 - access), 3)
+
+
 def front_scores(ssts):
     """Per-spot 'thermal edge' score aligned with the input order.
 

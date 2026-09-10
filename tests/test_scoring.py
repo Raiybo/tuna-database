@@ -3,9 +3,36 @@ from tuna import config, scoring
 
 def test_sst_score_bands():
     assert scoring.sst_score(21.0) == 1.0
-    assert scoring.sst_score(25.0) == 0.6
-    assert scoring.sst_score(27.0) == 0.3
+    assert scoring.sst_score(25.0) == 1.0      # Levantine core feeding band
+    assert scoring.sst_score(27.0) == 0.80
     assert scoring.sst_score(10.0) == config.SST_FLOOR
+
+
+def test_sst_band_survives_levantine_summer():
+    """A 29-30 C Levantine August must not score like dead water.
+
+    The old 18-24 C optimum pinned this factor at its floor right through the
+    seasonal peak, so it fought the seasonality prior instead of informing it.
+    """
+    assert scoring.sst_score(29.5) >= 0.5
+    assert scoring.sst_score(30.0) >= 0.5
+    assert scoring.sst_score(33.0) == config.SST_FLOOR
+
+
+def test_thermal_access_score():
+    # comfortable water: the whole day is fair game
+    assert scoring.thermal_access_score(24.0, 23.5, 24.5) == 1.0
+    # hot water: the bite collapses onto the coolest hour
+    hot_lo, hot_hi = 29.4, 30.6
+    coolest = scoring.thermal_access_score(hot_lo, hot_lo, hot_hi)
+    hottest = scoring.thermal_access_score(hot_hi, hot_lo, hot_hi)
+    assert coolest > hottest
+    assert hottest >= config.THERMAL_HOT_FLOOR
+    # unknown SST drops the factor out of the blend entirely
+    assert scoring.thermal_access_score(None, hot_lo, hot_hi) is None
+    # no resolvable diurnal swing still degrades cleanly
+    flat = scoring.thermal_access_score(30.0, 30.0, 30.0)
+    assert 0.0 < flat < 1.0
 
 
 def test_wave_and_wind_scores():

@@ -5,14 +5,18 @@
  */
 
 // ---- config (keep in sync with src/tuna/config.py) ----
-const SST_BANDS = [[18, 24, 1.0], [16, 26, 0.6], [14, 28, 0.3]], SST_FLOOR = 0.1;
+const SST_BANDS = [[19, 26, 1.00], [17, 28, 0.80], [15, 30, 0.55], [13, 31.5, 0.30]], SST_FLOOR = 0.12;
 const WAVE_BANDS = [[0.8, 1.0], [1.5, 0.7], [2.0, 0.4]], WAVE_FLOOR = 0.1;
 const WIND_BANDS = [[8, 1.0], [15, 0.9], [22, 0.7], [30, 0.45], [40, 0.2]], WIND_FLOOR = 0.05;
 const CURRENT_BANDS = [[0.3, 0.45], [2.5, 1.0], [5.0, 0.7], [9.0, 0.45]], CURRENT_FLOOR = 0.3;
 const PRESSURE_BANDS = [[-1e9, -3, 0.4], [-3, -1.5, 0.7], [-1.5, -0.5, 1.0], [-0.5, 0.5, 0.9], [0.5, 1.5, 0.7], [1.5, 1e9, 0.45]];
 const CAST_WAVE_W = 0.55, CAST_WIND_W = 0.45;
 const FRONT_MIN_SPREAD = 0.5, FRONT_BASELINE = 0.3;
-const WEIGHTS = { sst: 0.22, front: 0.13, bait: 0.15, current: 0.10, castability: 0.17, pressure: 0.10, solunar: 0.13 };
+const WEIGHTS = { sst: 0.20, front: 0.12, bait: 0.14, current: 0.09, castability: 0.16, pressure: 0.09, solunar: 0.10, seasonal: 0.10 };
+// month-of-year bluefin presence prior for the Levantine basin (seasonality.py)
+const SEASON_MONTHLY = [0.25, 0.25, 0.35, 0.55, 0.80, 0.95, 1.00, 1.00, 0.95, 0.80, 0.55, 0.35];
+const monthScore = (d) => SEASON_MONTHLY[d.getMonth()] ?? 0.5;
+const seasonLabel = (s) => s >= 0.9 ? "peak season" : s >= 0.7 ? "strong season" : s >= 0.45 ? "shoulder season" : "off season";
 const SIGHTING_MAX = 0.15, SIGHTING_RADIUS_KM = 15, SIGHTING_DAYS = 3;
 const BLOWOUT_WIND = 35, BLOWOUT_WAVE = 2.0;
 const COLORS = { PRIME: "#1a9850", GOOD: "#91cf60", FAIR: "#fdae61", POOR: "#d73027" };
@@ -223,13 +227,14 @@ async function load() {
   const nowMs = Date.now();
   const offset = marine.find((m) => m.offset)?.offset || 7200;
   const moon = solunar(nowMs, home.lon, offset);
+  const season = monthScore(new Date(nowMs + offset * 1000));
 
   const rows = spots.map((spot, i) => {
     const m = marine[i] || {}, w = weather[i] || {};
     const { total, contrib } = combineWeighted({
       sst: sstScore(m.sst), front: fronts[i], bait: null,
       current: currentScore(m.current), castability: castabilityScore(m.wave, w.wind),
-      pressure: pressureScore(w.trend), solunar: moon.day_score,
+      pressure: pressureScore(w.trend), solunar: moon.day_score, seasonal: season,
     });
     const boost = sightingBoost(spot.lat, spot.lon, sightings, nowMs);
     const score = Math.min(1, total + boost);
@@ -240,7 +245,7 @@ async function load() {
   }).sort((a, b) => b.score - a.score);
 
   renderVerdict(rows, moon, home);
-  renderOcean(rows, moon);
+  renderOcean(rows, moon, season);
 
   rows.forEach((r, idx) => {
     const c = COLORS[r.rating];
@@ -334,7 +339,7 @@ function renderVerdict(rows, moon, home) {
   verdictEl.innerHTML = `<span class="v-word">${v}</span><span class="v-reason">${reason}</span>`;
 }
 
-function renderOcean(rows, moon) {
+function renderOcean(rows, moon, season) {
   const pool = rows.filter((r) => r.inRange).length ? rows.filter((r) => r.inRange) : rows;
   const ref = pool.reduce((a, b) => a.dist < b.dist ? a : b, pool[0]);
   const g = (f) => pool.map(f).filter((x) => x != null);
@@ -348,6 +353,7 @@ function renderOcean(rows, moon) {
     ["Current", `~${curr.length ? (curr.reduce((a, b) => a + b, 0) / curr.length).toFixed(1) : "n/a"} km/h`],
     ["Moon", `${moon.phase}, ${moon.illumination_pct}%`],
     ["Solunar", `${moon.major_periods.join(" / ")} (approx)`],
+    ["Season", `${seasonLabel(season)} (${season.toFixed(2)})`],
   ].map(([k, val]) => `<div><span>${k}</span><b>${val}</b></div>`).join("");
 }
 

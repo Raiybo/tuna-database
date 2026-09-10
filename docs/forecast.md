@@ -2,10 +2,10 @@
 
 | Day | Verdict | Score | Peak window | Best spot | Conf |
 |---|---|--:|---|---|---|
-| Today | GO | 0.78 | 04:00-09:00 | Batroun Drop 19nm N | High |
-| Thu 09-10 | GO | 0.83 | 05:00-09:00 | Batroun Drop 19nm N | High |
-| Fri 09-11 | GO | 0.83 | 18:00-21:00 | Tabarja Deep 5nm NW | High |
-| Sat 09-12 | GO | 0.79 | 12:00-15:00 | Damour Banks 18nm SW | High |
-| Sun 09-13 | GO | 0.79 | 13:00-16:00 | Batroun Drop 19nm N | High |
+| Today | GO | 0.87 | 05:00-09:00 | Batroun Drop 19nm N | High |
+| Fri 09-11 | GO | 0.87 | 05:00-09:00 | Byblos Outer 11nm N | High |
+| Sat 09-12 | GO | 0.87 | 05:00-09:00 | Batroun Drop 19nm N | High |
+| Sun 09-13 | GO | 0.87 | 05:00-09:00 | Batroun Drop 19nm N | High |
+| Mon 09-14 | GO | 0.86 | 04:00-09:00 | Batroun Drop 19nm N | High |
 
-**Heads-up (Thu 2026-09-10):** GO - peak 05:00-09:00 at Batroun Drop. Patterns: Thermal break active, Productive water, Calm casting window, Strong moon.
+**Heads-up (Fri 2026-09-11):** GO - peak 05:00-09:00 at Byblos Outer. Patterns: Productive water, Heat-shifted bite, Calm casting window, Strong moon.

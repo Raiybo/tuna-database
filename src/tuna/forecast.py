@@ -156,7 +156,12 @@ def build_forecast(days: int | None = None, home_override: Home | None = None) -
         spot_curves = []     # list of (curve, hours_meta)
         for i in range(len(spots)):
             curve = []
-            for hourf, t, rec in _hours_for(merged[i], date):
+            hours = _hours_for(merged[i], date)
+            # the day's surface swing at this spot drives the thermal-refuge read
+            day_ssts = [r["sst"] for _, _, r in hours if r["sst"] is not None]
+            sst_lo = min(day_ssts) if day_ssts else None
+            sst_hi = max(day_ssts) if day_ssts else None
+            for hourf, t, rec in hours:
                 factors = {
                     "sst": scoring.sst_score(rec["sst"]) if rec["sst"] is not None else None,
                     "front": front_day[i],
@@ -168,6 +173,7 @@ def build_forecast(days: int | None = None, home_override: Home | None = None) -
                     "solunar": sol["day_score"],
                     "feeding": scoring.feeding_time_score(hourf, sol),
                     "seasonal": seasonal,
+                    "thermal": scoring.thermal_access_score(rec["sst"], sst_lo, sst_hi),
                 }
                 sc, _ = scoring.combine_weighted(factors, config.WEIGHTS_HOURLY)
                 curve.append((hourf, sc, rec))
@@ -208,6 +214,8 @@ def build_forecast(days: int | None = None, home_override: Home | None = None) -
             "wind_peak": peak_rec.get("wind"),
             "wave_peak": peak_rec.get("wave"),
             "sst": noon.get("sst"),
+            "sst_day_max": max([c[2]["sst"] for c in curve if c[2]["sst"] is not None],
+                               default=None),
             "peak_hour": int(peak_h),
             "moon_phase": sol["phase"],
         }

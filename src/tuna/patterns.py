@@ -79,6 +79,15 @@ def detect(ctx: dict, catches: list | None = None):
         pats.append(Pattern("Productive water",
                             f"chlorophyll {chl:.2f} mg/m3 - forage present", chl <= 0.6))
 
+    smax = ctx.get("sst_day_max")
+    if smax is not None and smax >= config.THERMAL_STRESS_C:
+        ph = ctx.get("peak_hour")
+        cool = ("the cool edge of the day" if ph is None
+                else f"the cool edge of the day ({int(ph):02d}:00)")
+        pats.append(Pattern("Heat-shifted bite",
+                            f"surface hits {smax:.1f} C - fish sound by day, work "
+                            f"{cool}", smax >= config.THERMAL_STRESS_C + 1.5))
+
     wp, hp = ctx.get("wind_peak"), ctx.get("wave_peak")
     if wp is not None and hp is not None and wp <= 15 and hp <= 0.8:
         pats.append(Pattern("Calm casting window",

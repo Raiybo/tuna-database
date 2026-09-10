@@ -12,12 +12,20 @@ so the score stays meaningful and the system degrades gracefully.
 from __future__ import annotations
 
 # --- sea-surface temperature: (low, high, score), tightest band first ---
+# Calibrated for the LEVANTINE basin, not the Atlantic/western Med. This is a
+# bluefin spawning ground whose surface layer routinely runs 28-30 C from June
+# to October - i.e. through the seasonal peak. The old 18-24 C optimum pinned
+# this factor at its floor for the whole season, which fought the seasonality
+# prior instead of informing it. Hot surface water does not mean "no fish": it
+# means the fish hold below the mixed layer by day (see THERMAL_* below, which
+# is what moves the bite WINDOW rather than the day verdict).
 SST_BANDS = (
-    (18.0, 24.0, 1.0),   # optimal warm-season feeding window
-    (16.0, 26.0, 0.6),
-    (14.0, 28.0, 0.3),
+    (19.0, 26.0, 1.00),   # core feeding band / Levantine spawning window
+    (17.0, 28.0, 0.80),
+    (15.0, 30.0, 0.55),   # hot Levantine summer surface - fish deep, feed cool edges
+    (13.0, 31.5, 0.30),
 )
-SST_FLOOR = 0.1
+SST_FLOOR = 0.12
 
 # --- castability sub-factors ---
 WAVE_BANDS = ((0.8, 1.0), (1.5, 0.7), (2.0, 0.4))   # (max_height, score)
@@ -52,6 +60,17 @@ CHL_BANDS = (
 CHL_FLOOR = 0.40          # >= 1.5: murky / post-bloom
 CHL_ENABLED = True        # live: NOAA OceanWatch S-NPP VIIRS chlorophyll (see sources/chlorophyll.py)
 CHL_MAX_AGE_DAYS = 21     # VIIRS NRT chl lags ~1-2 weeks; ignore anything older
+
+# --- thermal refuge: a hot surface layer pushes bluefin DOWN, not away --------
+# Bluefin are endothermic and prefer water a few degrees below the temperature
+# that maximises their metabolic rate. When the Levantine surface layer bakes,
+# tagged fish thermoregulate by dropping below the mixed layer through the heat
+# of the day and pushing back up at the cool edges. So heat reshapes WHEN they
+# are catchable on the surface - it sharpens the dawn/dusk window rather than
+# writing the day off. Used by scoring.thermal_access_score (hourly model only).
+THERMAL_STRESS_C = 27.5      # above this the surface layer starts to push fish down
+THERMAL_STRESS_SPAN = 3.5    # deg C above the threshold for the full effect
+THERMAL_HOT_FLOOR = 0.25     # midday surface-access score in fully heat-stressed water
 
 # --- thermal-break ("front") heuristic across the spot field ---
 FRONT_MIN_SPREAD = 0.5
@@ -94,15 +113,16 @@ FEEDING_SOLUNAR_MINOR_STRENGTH = 0.70
 
 # Hourly model weights (adds a time-of-day 'feeding' factor; renormalised like WEIGHTS).
 WEIGHTS_HOURLY = {
-    "sst": 0.15,
+    "sst": 0.11,          # trimmed: 'thermal' now carries the hot-water read hourly
     "front": 0.10,
-    "bait": 0.11,
-    "current": 0.07,
-    "castability": 0.15,
+    "bait": 0.10,
+    "current": 0.06,
+    "castability": 0.14,
     "pressure": 0.08,
     "solunar": 0.09,
     "feeding": 0.15,
-    "seasonal": 0.10,
+    "seasonal": 0.09,
+    "thermal": 0.08,      # surface accessibility given the day's heat cycle
 }
 
 # A contiguous bite window = the run of hours whose score is within this of the peak.
