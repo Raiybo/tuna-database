@@ -21,6 +21,8 @@ jobs:
       - name: Install image deps
         run: pip install pillow
       - name: Generate today's report + hotspots + day-sheet image
+        env:
+          GFW_TOKEN: ${{ secrets.GFW_TOKEN }}   # optional: fishing-fleet layer
         run: |
           mkdir -p docs
           PYTHONPATH=src python -m tuna --markdown > docs/today.md
