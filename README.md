@@ -36,25 +36,48 @@ If a source is missing, its weight is **renormalised** over the rest, so the sco
 
 | Factor | Source | Weight | Read |
 |---|---|--:|---|
-| Sea-surface temp | Open-Meteo Marine | 0.22 | Optimal 18–24 °C warm-season feeding |
-| Thermal front | derived from the SST field | 0.13 | Breaks concentrate bait |
-| Bait / chlorophyll | ERDDAP (gated) | 0.15 | Productivity proxy — *off until a fresh feed is wired* |
-| Ocean current | Open-Meteo Marine | 0.10 | A moderate drift makes feeding edges |
-| Castability | wind + wave | 0.17 | Can you cast & spot busts? |
-| Pressure trend | Open-Meteo Weather | 0.10 | A slow fall often turns fish on |
-| Solunar / moon | computed locally | 0.13 | Major/minor periods, new/full strength |
+| Sea-surface temp | Open-Meteo Marine | 0.20 | Optimal 19–26 °C; **Levantine-calibrated** (see below) |
+| Castability | wind + wave | 0.16 | Can you cast & spot busts? |
+| Bait / chlorophyll | NOAA VIIRS (live) | 0.14 | Productivity proxy — on when the pixel is < 21 days old |
+| Thermal front | derived from the SST field | 0.12 | Breaks concentrate bait |
+| Solunar / moon | computed locally | 0.10 | Major/minor periods, new/full strength |
+| Seasonality | month-of-year prior | 0.10 | Eastern-Med bluefin presence by month |
+| Ocean current | Open-Meteo Marine | 0.09 | A moderate drift makes feeding edges |
+| Pressure trend | Open-Meteo Weather | 0.09 | A slow fall often turns fish on |
+
+The **hourly** model ([`WEIGHTS_HOURLY`](src/tuna/config.py)) adds two more: a time-of-day
+**feeding** factor and a **thermal** one — see *Hot water moves the window, not the day*.
+
+### Calibrated for the Levantine basin
+
+The temperature band is deliberately **not** the Atlantic one. This corner of the Med is a bluefin
+*spawning ground* whose surface layer routinely runs **28–30 °C** from June to October — i.e. right
+through the seasonal peak. A conventional 18–24 °C optimum pins the heaviest factor at its floor for
+the entire season, so the model ends up arguing with its own seasonality prior. The bands here
+stay meaningful in genuinely hot water.
+
+### Hot water moves the window, not the day
+
+Bluefin are endothermic and avoid water warm enough to cap their metabolic performance. When the
+surface layer bakes, tagged fish **thermoregulate by dropping below the mixed layer** through the
+heat of the day and push back up at the cool edges. So a 30 °C afternoon is not a write-off — it is
+a *narrower* opportunity. [`scoring.thermal_access_score`](src/tuna/scoring.py) models that against
+each day's own surface swing, so heat **sharpens the peak bite window onto dawn/dusk** instead of
+flattening the verdict, and shows up as a **"Heat-shifted bite"** pattern in `--forecast` and the
+evening push.
+
+### A note on "bait in the water"
+
+The old MODIS/VIIRS feeds on `coastwatch.pfeg.noaa.gov` are frozen (~2022). The live one that
+actually works is **NOAA OceanWatch S-NPP VIIRS** — [`sources/chlorophyll.py`](src/tuna/sources/chlorophyll.py)
+pulls the daily product and falls back to the better-covered weekly composite. Ocean colour is
+cloud-gapped, so it takes the **nearest valid pixel** in a ~9 km box rather than one exact point.
+It is **on** (`CHL_ENABLED = True`) and the weight only counts while the pixel is fresher than
+`CHL_MAX_AGE_DAYS` (21) — otherwise it drops out and the remaining weights renormalise.
 
 Recent **sightings** you log ([`data/sightings.json`](data/sightings.json)) add an extra boost to
 nearby spots and appear on the map. Tunables live in [`src/tuna/config.py`](src/tuna/config.py)
 (and mirrored in [`web/app.js`](web/app.js)).
-
-### A note on "bait in the water"
-
-The free satellite chlorophyll feeds reachable without a login are currently frozen (~2022), so
-chlorophyll is **disabled by default** (`CHL_ENABLED = False`). Today's *live* bait read comes from
-**thermal fronts + current edges + your sightings log**. To fortify: add a fresh source to
-[`src/tuna/sources/chlorophyll.py`](src/tuna/sources/chlorophyll.py) and flip `CHL_ENABLED` on — the
-weight activates automatically. This is the natural seam for merging your other repo.
 
 ---
 
@@ -92,6 +115,7 @@ windows (dawn/dusk) stacked with **solunar** majors/minors. For each day it pick
 - **Productive water** — chlorophyll in the forage band
 - **Calm casting window** — low wind & swell at the peak
 - **Strong moon** — new/full peak energy
+- **Heat-shifted bite** — surface too warm by day; work the cool edge
 
 **It learns from you.** Log trips in [`data/catches.json`](data/catches.json) (catches *and* blanks);
 when a day's conditions resemble your past hook-ups, a **"Matches your past catches"** pattern fires.
@@ -124,9 +148,15 @@ tuna log --blank --spot tabarja --hour 7              # log a blank (just as imp
 tuna learn                                            # hit-rate + what separates catches from blanks
 ```
 
-Catches *and* blanks let the model calibrate to **your** water. Optional: set a free **`GFW_TOKEN`** to
-light up a **fishing-fleet activity** layer ([`sources/ais.py`](src/tuna/sources/ais.py)) — where the
-commercial fleet works is real, observed evidence of fish.
+Catches *and* blanks let the model calibrate to **your** water. Optional: set a free **`GFW_TOKEN`**
+(register at [globalfishingwatch.org/our-apis](https://globalfishingwatch.org/our-apis)) to light up
+the **fishing-fleet activity** layer ([`sources/ais.py`](src/tuna/sources/ais.py)) — where the
+commercial fleet actually worked over the last ~14 days is real, observed evidence of fish. It
+attaches to `data/hotspots.json` and toggles on the map as 🚢.
+
+It is deliberately **kept out of the score**: observed effort is evidence you read, not an
+independent measurement of the water, so folding it in would inflate the multi-signal *agreement*
+confidence with something that isn't a separate read.
 
 ## Phone notifications (the night before)
 
