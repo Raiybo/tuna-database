@@ -153,17 +153,20 @@ const sightLayer = L.layerGroup().addTo(map);
 const hotspotLayer = L.layerGroup().addTo(map);
 const fleetLayer = L.layerGroup().addTo(map);
 
-L.control.layers(
+// The fleet overlay is added to this control only when it actually has data
+// (see renderFleet) - an empty toggle that silently does nothing is worse than
+// no toggle at all.
+const layerControl = L.control.layers(
   {
     "Dark map": darkBase,
     "Satellite HD (sharp ~1m)": esriHD,
     "Satellite 10m (cloudless)": s2cloud,
     "Satellite TODAY (coarse)": viirsBase,
   },
-  { "Bait hotspots 🎯": hotspotLayer, "Fishing spots": spotLayer, "Frenzies / sightings": sightLayer,
-    "Fishing fleet 🚢": fleetLayer },
+  { "Bait hotspots 🎯": hotspotLayer, "Fishing spots": spotLayer, "Frenzies / sightings": sightLayer },
   { collapsed: false }
 ).addTo(map);
+let fleetShown = false;
 
 // Tap anywhere (or on a satellite feature) to get its exact GPS + a 10 m Sentinel-2 image.
 let clickMarker;
@@ -322,9 +325,17 @@ function renderHotspots(hs) {
 
 // Where the commercial fleet actually worked (Global Fishing Watch apparent
 // fishing effort, last ~14 days). Observed evidence, deliberately NOT folded
-// into any spot score - it rides along as its own layer. Dormant without GFW_TOKEN.
+// into any spot score - it rides along as its own layer.
+//
+// Entirely OPTIONAL, and off by default: it is the one thing here that wants a
+// key, and it is of limited use in this particular water anyway. GFW derives
+// effort from AIS, and Eastern-Med artisanal boats mostly do not carry AIS -
+// EMODnet's independent AIS fishing-density product reads 0 across the whole
+// Lebanese and Cypriot coast while showing 4.6 in the Adriatic. Nothing else in
+// the app needs a key; this layer simply stays hidden.
 function renderFleet(fleet) {
   if (!fleet || !fleet.enabled || !(fleet.cells || []).length) return;
+  if (!fleetShown) { layerControl.addOverlay(fleetLayer, "Fishing fleet 🚢"); fleetShown = true; }
   const max = Math.max(...fleet.cells.map((c) => c.hours || 0)) || 1;
   fleet.cells.forEach((c) => {
     if (c.lat == null || c.lon == null) return;

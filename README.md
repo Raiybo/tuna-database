@@ -148,15 +148,24 @@ tuna log --blank --spot tabarja --hour 7              # log a blank (just as imp
 tuna learn                                            # hit-rate + what separates catches from blanks
 ```
 
-Catches *and* blanks let the model calibrate to **your** water. Optional: set a free **`GFW_TOKEN`**
-(register at [globalfishingwatch.org/our-apis](https://globalfishingwatch.org/our-apis)) to light up
-the **fishing-fleet activity** layer ([`sources/ais.py`](src/tuna/sources/ais.py)) — where the
-commercial fleet actually worked over the last ~14 days is real, observed evidence of fish. It
-attaches to `data/hotspots.json` and toggles on the map as 🚢.
+Catches *and* blanks let the model calibrate to **your** water.
 
-It is deliberately **kept out of the score**: observed effort is evidence you read, not an
-independent measurement of the water, so folding it in would inflate the multi-signal *agreement*
-confidence with something that isn't a separate read.
+### No API keys required
+
+Every signal the model uses is **free and keyless** — Open-Meteo, NOAA MUR/VIIRS/ETOPO, and locally
+computed solunar. Clone it and it works. The only optional extra is
+[`sources/ais.py`](src/tuna/sources/ais.py), the Global Fishing Watch fleet-activity layer, which
+wants a free `GFW_TOKEN` — and in *this* water it is probably not worth the trouble:
+
+> GFW derives fishing effort from **AIS**, and Eastern-Med artisanal boats largely do not carry AIS
+> transponders. EMODnet's independent AIS-derived fishing-density product reads **0 across the whole
+> Lebanese and Cypriot coast**, while returning 4.6 in the Adriatic — the product works, the
+> transponders aren't there. Expect a sparse layer at best.
+
+Without a token the layer stays dormant, its map toggle never appears, and nothing else changes. If
+you do enable it, it is deliberately **kept out of the score**: observed effort is evidence you read,
+not an independent measurement of the water, so folding it in would inflate the multi-signal
+*agreement* confidence with something that isn't a separate read.
 
 ## Phone notifications (the night before)
 
