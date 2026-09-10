@@ -151,6 +151,7 @@ const s2cloud = L.tileLayer(
 const spotLayer = L.layerGroup().addTo(map);
 const sightLayer = L.layerGroup().addTo(map);
 const hotspotLayer = L.layerGroup().addTo(map);
+const fleetLayer = L.layerGroup().addTo(map);
 
 L.control.layers(
   {
@@ -159,7 +160,8 @@ L.control.layers(
     "Satellite 10m (cloudless)": s2cloud,
     "Satellite TODAY (coarse)": viirsBase,
   },
-  { "Bait hotspots 🎯": hotspotLayer, "Fishing spots": spotLayer, "Frenzies / sightings": sightLayer },
+  { "Bait hotspots 🎯": hotspotLayer, "Fishing spots": spotLayer, "Frenzies / sightings": sightLayer,
+    "Fishing fleet 🚢": fleetLayer },
   { collapsed: false }
 ).addTo(map);
 
@@ -189,7 +191,8 @@ const trendWord = (t) => t == null ? "n/a" : t > 0.5 ? `rising (+${t}/3h)` : t <
 
 async function load() {
   statusEl.textContent = "Loading live sea conditions…";
-  spotLayer.clearLayers(); sightLayer.clearLayers(); hotspotLayer.clearLayers(); rankingEl.innerHTML = "";
+  spotLayer.clearLayers(); sightLayer.clearLayers(); hotspotLayer.clearLayers();
+  fleetLayer.clearLayers(); rankingEl.innerHTML = "";
 
   let home, db, sightRaw, hsData;
   try {
@@ -217,6 +220,7 @@ async function load() {
   // Hotspots render INSTANTLY from local data, so the map is alive before the
   // (now batched) live conditions arrive.
   renderHotspots(hsData);
+  renderFleet(hsData.fleet);
   statusEl.textContent = "Loading live conditions…";
 
   const [marine, weather] = await Promise.all([
@@ -313,6 +317,29 @@ function renderHotspots(hs) {
         `${hs.chl_source ? "; " + hs.chl_source : ""}</small><br>` +
         `<a href="${gmap}" target="_blank" rel="noopener">▶ Navigate (Maps)</a> &middot; ` +
         `<a href="${eo}" target="_blank" rel="noopener">📷 satellite photo</a>`);
+  });
+}
+
+// Where the commercial fleet actually worked (Global Fishing Watch apparent
+// fishing effort, last ~14 days). Observed evidence, deliberately NOT folded
+// into any spot score - it rides along as its own layer. Dormant without GFW_TOKEN.
+function renderFleet(fleet) {
+  if (!fleet || !fleet.enabled || !(fleet.cells || []).length) return;
+  const max = Math.max(...fleet.cells.map((c) => c.hours || 0)) || 1;
+  fleet.cells.forEach((c) => {
+    if (c.lat == null || c.lon == null) return;
+    const frac = (c.hours || 0) / max;
+    L.circleMarker([c.lat, c.lon], {
+      radius: 5 + 9 * frac, color: "#ffd166", weight: 1,
+      fillColor: "#ff8c00", fillOpacity: 0.25 + 0.45 * frac,
+    }).addTo(fleetLayer).bindPopup(
+      `<b>🚢 Fishing-fleet activity</b><br>` +
+      `<div style="font-size:16px;font-weight:700;color:#ffd166;margin:4px 0">` +
+      `${(c.hours || 0).toFixed(1)} h apparent fishing</div>` +
+      `<b>${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}</b><br>` +
+      `<small>${fleet.note || ""}</small><br>` +
+      `<a href="https://www.google.com/maps?q=${c.lat},${c.lon}" target="_blank" ` +
+      `rel="noopener">▶ Navigate (Maps)</a>`);
   });
 }
 

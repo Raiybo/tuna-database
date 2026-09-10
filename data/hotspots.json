@@ -176,5 +176,10 @@
    "heading": "WSW",
    "why": "SST front 0.10C, shelf break"
   }
- ]
+ ],
+ "fleet": {
+  "enabled": false,
+  "cells": [],
+  "note": "GFW_TOKEN not set - fleet-activity layer dormant"
+ }
 }
