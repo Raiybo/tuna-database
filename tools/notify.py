@@ -25,6 +25,18 @@ from tuna import forecast as forecast_mod
 from tuna.conditions import compass
 from tuna.sources._http import post
 
+def env(name, default=None):
+    """os.environ.get, but treats an EMPTY value as absent.
+
+    GitHub Actions injects every mapped secret into the environment even when it
+    is unset, as an empty string - so os.environ.get(name, default) hands back
+    "" and silently defeats the default. That turned the ntfy base URL into ""
+    and posted to the relative URL "/<topic>", which urllib rejects outright.
+    """
+    v = os.environ.get(name)
+    return v if v not in (None, "") else default
+
+
 VERDICT_EMOJI = {"GO": "🟢", "DECENT": "🟡", "MARGINAL": "🟠", "SLOW": "🔴", "TOUGH": "🌬️"}
 VERDICT_PRIORITY = {"GO": "high", "DECENT": "default", "MARGINAL": "low",
                     "SLOW": "low", "TOUGH": "low"}
@@ -68,12 +80,12 @@ def compose(fc, day):
 
 
 def send_ntfy(title, body, priority, tags):
-    topic = os.environ.get("NTFY_TOPIC")
+    topic = env("NTFY_TOPIC")
     if not topic:
         return None
-    server = os.environ.get("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
+    server = env("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
     headers = {"Title": title, "Priority": priority, "Tags": tags}
-    token = os.environ.get("NTFY_TOKEN")
+    token = env("NTFY_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
     status, _ = post(f"{server}/{topic}", body.encode("utf-8"), headers)
@@ -81,7 +93,7 @@ def send_ntfy(title, body, priority, tags):
 
 
 def send_telegram(title, body):
-    tok, chat = os.environ.get("TELEGRAM_BOT_TOKEN"), os.environ.get("TELEGRAM_CHAT_ID")
+    tok, chat = env("TELEGRAM_BOT_TOKEN"), env("TELEGRAM_CHAT_ID")
     if not (tok and chat):
         return None
     data = urllib.parse.urlencode({"chat_id": chat, "text": f"{title}\n\n{body}"}).encode()
@@ -91,7 +103,7 @@ def send_telegram(title, body):
 
 
 def send_pushover(title, body, priority):
-    tok, user = os.environ.get("PUSHOVER_TOKEN"), os.environ.get("PUSHOVER_USER")
+    tok, user = env("PUSHOVER_TOKEN"), env("PUSHOVER_USER")
     if not (tok and user):
         return None
     prio = "1" if priority == "high" else "0"
@@ -139,7 +151,7 @@ def main(argv=None) -> int:
     snap = write_snapshot(fc, day)
     print(f"--- {title} ---\n{body}\n(snapshot: {snap})")
 
-    if os.environ.get("NOTIFY_ONLY_GOOD") and day.verdict not in ("GO", "DECENT"):
+    if env("NOTIFY_ONLY_GOOD") and day.verdict not in ("GO", "DECENT"):
         print(f"NOTIFY_ONLY_GOOD set and verdict is {day.verdict}; staying quiet.")
         return 0
 
