@@ -2,10 +2,10 @@
 
 | Day | Verdict | Score | Peak window | Best spot | Conf |
 |---|---|--:|---|---|---|
-| Today | GO | 0.85 | 05:00-10:00 | Byblos Outer 11nm N | High |
-| Wed 10-07 | GO | 0.86 | 04:00-11:00 | Tabarja Deep 5nm NW | Low |
-| Thu 10-08 | GO | 0.86 | 04:00-09:00 | Byblos Outer 11nm N | High |
-| Fri 10-09 | GO | 0.84 | 17:00-21:00 | Tabarja Deep 5nm NW | Moderate |
-| Sat 10-10 | GO | 0.87 | 05:00-09:00 | Byblos Outer 11nm N | Moderate |
+| Today | GO | 0.87 | 04:00-11:00 | Beirut Canyon Edge 11nm WSW | Moderate |
+| Thu 10-08 | GO | 0.91 | 04:00-09:00 | Beirut Canyon Edge 11nm WSW | High |
+| Fri 10-09 | GO | 0.89 | 04:00-09:00 | Beirut Canyon Edge 11nm WSW | High |
+| Sat 10-10 | GO | 0.89 | 17:00-21:00 | Beirut Canyon Edge 11nm WSW | High |
+| Sun 10-11 | GO | 0.88 | 12:00-15:00 | Beirut Canyon Edge 11nm WSW | High |
 
-**Heads-up (Wed 2026-10-07):** GO - peak 04:00-11:00 at Tabarja Deep. Patterns: Thermal break active, Heat-shifted bite, Calm casting window.
+**Heads-up (Thu 2026-10-08):** GO - peak 04:00-09:00 at Beirut Canyon Edge. Patterns: Thermal break active, Pre-frontal feed, Productive water, Heat-shifted bite, Calm casting window, Strong moon.
