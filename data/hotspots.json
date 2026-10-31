@@ -1,176 +1,158 @@
 {
  "home": "Marina Baye, Dbayeh",
- "generated_utc_date": "2026-10-28",
- "sst_source": "MUR 1km 2026-10-28",
- "chl_source": "VIIRS daily 2026-10-19",
- "cells_scored": 133,
+ "generated_utc_date": "2026-10-29",
+ "sst_source": "CoralTemp 5km 2026-10-29",
+ "chl_source": "VIIRS daily 2026-10-20",
+ "cells_scored": 25,
  "season": "strong season",
  "season_score": 0.8,
  "note": "Multi-signal bait-likelihood (SST front x chlorophyll x current edge x structure). Confidence = how many signals agree. Prediction of where to look, NOT a fish detector - confirm with diving birds on the water.",
  "hotspots": [
   {
-   "lat": 34.1,
-   "lon": 35.61,
-   "score": 0.83,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 1.0,
-    "convergence": 0.48,
-    "structure": 1.0
-   },
-   "sst_c": 25.5,
-   "chl": null,
-   "current_kmh": 1.2,
-   "depth_m": 169,
-   "dist_nm": 10.0,
-   "heading": "N",
-   "why": "SST front 0.13C, shelf break"
-  },
-  {
-   "lat": 34.13,
-   "lon": 35.58,
-   "score": 0.647,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 0.94,
-    "convergence": 0.0,
-    "structure": 1.0
-   },
-   "sst_c": 25.7,
-   "chl": null,
-   "current_kmh": 1.8,
-   "depth_m": 659,
-   "dist_nm": 11.7,
-   "heading": "N",
-   "why": "SST front 0.11C, shelf break"
-  },
-  {
-   "lat": 33.83,
-   "lon": 35.43,
-   "score": 0.618,
+   "lat": 33.875,
+   "lon": 35.425,
+   "score": 0.327,
    "confidence": "Low",
    "agree": 1,
    "signals": {
-    "sst_front": 0.35,
-    "convergence": 0.52,
-    "chl_anom": 0.93,
-    "chl_front": 1.0,
-    "structure": 0.58
-   },
-   "sst_c": 25.4,
-   "chl": 0.25,
-   "current_kmh": 1.2,
-   "depth_m": 185,
-   "dist_nm": 10.2,
-   "heading": "SW",
-   "why": "chl rich 0.25"
-  },
-  {
-   "lat": 33.92,
-   "lon": 35.44,
-   "score": 0.582,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 0.4,
-    "convergence": 0.25,
-    "chl_anom": 0.87,
-    "chl_front": 0.76,
+    "sst_front": 0.0,
+    "chl_anom": 0.56,
+    "chl_front": 0.16,
     "structure": 1.0
    },
-   "sst_c": 25.5,
-   "chl": 0.25,
-   "current_kmh": 2.1,
-   "depth_m": 351,
-   "dist_nm": 7.5,
-   "heading": "W",
-   "why": "chl rich 0.25, shelf break"
-  },
-  {
-   "lat": 33.86,
-   "lon": 35.41,
-   "score": 0.579,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 0.35,
-    "convergence": 0.23,
-    "chl_anom": 0.93,
-    "chl_front": 0.79,
-    "structure": 1.0
-   },
-   "sst_c": 25.5,
-   "chl": 0.25,
-   "current_kmh": 1.8,
-   "depth_m": 177,
-   "dist_nm": 10.0,
+   "sst_c": 25.2,
+   "chl": 0.27,
+   "current_kmh": 1.0,
+   "depth_m": 178,
+   "dist_nm": 9.0,
    "heading": "WSW",
-   "why": "chl rich 0.25, shelf break"
+   "why": "shelf break"
   },
   {
-   "lat": 34.0,
-   "lon": 35.49,
-   "score": 0.564,
-   "confidence": "Moderate",
-   "agree": 2,
-   "signals": {
-    "sst_front": 0.19,
-    "convergence": 0.25,
-    "chl_anom": 1.0,
-    "chl_front": 0.97,
-    "structure": 0.95
-   },
-   "sst_c": 25.6,
-   "chl": 0.28,
-   "current_kmh": 1.9,
-   "depth_m": 1250,
-   "dist_nm": 6.3,
-   "heading": "NW",
-   "why": "chl rich 0.28, shelf break"
-  },
-  {
-   "lat": 34.0,
-   "lon": 35.44,
-   "score": 0.545,
+   "lat": 33.925,
+   "lon": 35.375,
+   "score": 0.304,
    "confidence": "Low",
    "agree": 1,
    "signals": {
-    "sst_front": 0.37,
-    "convergence": 0.27,
-    "chl_anom": 1.0,
-    "chl_front": 1.0,
-    "structure": 0.34
+    "sst_front": 0.0,
+    "structure": 1.0
    },
-   "sst_c": 25.6,
-   "chl": 0.28,
-   "current_kmh": 1.9,
-   "depth_m": 1429,
-   "dist_nm": 8.4,
-   "heading": "WNW",
-   "why": "chl rich 0.28"
+   "sst_c": 25.2,
+   "chl": null,
+   "current_kmh": 1.2,
+   "depth_m": 1363,
+   "dist_nm": 10.7,
+   "heading": "W",
+   "why": "shelf break"
   },
   {
-   "lat": 33.78,
-   "lon": 35.41,
-   "score": 0.524,
-   "confidence": "Moderate",
-   "agree": 2,
+   "lat": 33.925,
+   "lon": 35.525,
+   "score": 0.304,
+   "confidence": "Low",
+   "agree": 1,
    "signals": {
-    "sst_front": 0.24,
-    "convergence": 0.23,
-    "chl_anom": 1.0,
-    "chl_front": 0.85,
-    "structure": 0.73
+    "sst_front": 0.0,
+    "structure": 1.0
+   },
+   "sst_c": 25.3,
+   "chl": null,
+   "current_kmh": 1.3,
+   "depth_m": 36,
+   "dist_nm": 3.3,
+   "heading": "W",
+   "why": "shelf break"
+  },
+  {
+   "lat": 33.975,
+   "lon": 35.475,
+   "score": 0.304,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "structure": 1.0
+   },
+   "sst_c": 25.3,
+   "chl": null,
+   "current_kmh": 1.5,
+   "depth_m": 1228,
+   "dist_nm": 6.2,
+   "heading": "WNW",
+   "why": "shelf break"
+  },
+  {
+   "lat": 33.975,
+   "lon": 35.525,
+   "score": 0.304,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "structure": 1.0
+   },
+   "sst_c": 25.3,
+   "chl": null,
+   "current_kmh": 1.3,
+   "depth_m": 497,
+   "dist_nm": 4.0,
+   "heading": "NW",
+   "why": "shelf break"
+  },
+  {
+   "lat": 33.975,
+   "lon": 35.575,
+   "score": 0.304,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "structure": 1.0
+   },
+   "sst_c": 25.3,
+   "chl": null,
+   "current_kmh": 1.3,
+   "depth_m": 50,
+   "dist_nm": 2.5,
+   "heading": "NNW",
+   "why": "shelf break"
+  },
+  {
+   "lat": 34.025,
+   "lon": 35.525,
+   "score": 0.304,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "structure": 1.0
    },
    "sst_c": 25.4,
-   "chl": 0.28,
-   "current_kmh": 1.5,
-   "depth_m": 60,
-   "dist_nm": 12.9,
-   "heading": "SW",
-   "why": "chl rich 0.28, shelf break"
+   "chl": null,
+   "current_kmh": 1.3,
+   "depth_m": 1160,
+   "dist_nm": 6.3,
+   "heading": "NNW",
+   "why": "shelf break"
+  },
+  {
+   "lat": 34.025,
+   "lon": 35.575,
+   "score": 0.304,
+   "confidence": "Low",
+   "agree": 1,
+   "signals": {
+    "sst_front": 0.0,
+    "structure": 1.0
+   },
+   "sst_c": 25.4,
+   "chl": null,
+   "current_kmh": 1.3,
+   "depth_m": 676,
+   "dist_nm": 5.5,
+   "heading": "N",
+   "why": "shelf break"
   }
  ],
  "fleet": {
