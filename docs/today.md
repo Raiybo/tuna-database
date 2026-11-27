@@ -1,28 +1,28 @@
-# Tuna day sheet - 2026-11-26T14:45 (Asia/Beirut)
+# Tuna day sheet - 2026-11-27T14:30 (Asia/Beirut)
 
 **From Marina Baye, Dbayeh** (33.935, 35.590, range 40 km)
 
-## VERDICT: GO - 8-25 km/h N wind, 0.8-0.9 m swell, water 23.3 C
+## VERDICT: GO - 4-6 km/h NW wind, 0.5-0.5 m swell, water 23.2 C
 
 | Ocean | |
 |---|---|
-| Sea temp | 22.9 C-23.5 C (avg 23.3) |
-| Swell | 0.8 m-0.9 m |
-| Wind | 7.6 km/h-25.2 km/h N |
-| Pressure | 1020.0 hPa, falling (-1.3/3h) |
-| Current | ~0.3 km/h |
-| Moon | Full Moon, 96% |
-| Solunar majors | 02:06 / 14:06 (approx) |
+| Sea temp | 22.8 C-23.3 C (avg 23.2) |
+| Swell | 0.5 m-0.5 m |
+| Wind | 4.3 km/h-6.0 km/h NW |
+| Pressure | 1016.3 hPa, falling (-1.4/3h) |
+| Current | ~0.1 km/h |
+| Moon | Waning Gibbous, 91% |
+| Solunar majors | 02:55 / 14:55 (approx) |
 
 ## Where to go (within range, best first)
 
 | # | Rating | Score | Dist | Head | SST | Wind | Spot | Coordinates |
 |--:|:--|--:|--:|:--|--:|--:|:--|:--|
-| 1 | PRIME | 0.87 | 19.0 nm | N | 22.9 C | 10.5 km/h | Batroun Drop (Batroun) | 34.250, 35.550 |
-| 2 | PRIME | 0.80 | 5.2 nm | NW | 23.5 C | 7.6 km/h | Tabarja Deep (Jounieh / Tabarja) | 34.000, 35.520 |
-| 3 | PRIME | 0.79 | 11.0 nm | WSW | 23.3 C | 17.4 km/h | Beirut Canyon Edge (Beirut / Raouche) | 33.880, 35.380 |
-| 4 | PRIME | 0.78 | 11.3 nm | N | 23.4 C | 25.2 km/h | Byblos Outer (Jbeil / Byblos) | 34.120, 35.550 |
-| 5 | GOOD | 0.75 | 18.5 nm | SW | 23.5 C | 16.2 km/h | Damour Banks (Khalde / Damour) | 33.700, 35.350 |
+| 1 | PRIME | 0.85 | 19.0 nm | N | 22.8 C | 4.3 km/h | Batroun Drop (Batroun) | 34.250, 35.550 |
+| 2 | PRIME | 0.76 | 11.0 nm | WSW | 23.2 C | 4.6 km/h | Beirut Canyon Edge (Beirut / Raouche) | 33.880, 35.380 |
+| 3 | GOOD | 0.74 | 11.3 nm | N | 23.3 C | 5.9 km/h | Byblos Outer (Jbeil / Byblos) | 34.120, 35.550 |
+| 4 | GOOD | 0.74 | 5.2 nm | NW | 23.3 C | 4.3 km/h | Tabarja Deep (Jounieh / Tabarja) | 34.000, 35.520 |
+| 5 | GOOD | 0.71 | 18.5 nm | SW | 23.3 C | 6.0 km/h | Damour Banks (Khalde / Damour) | 33.700, 35.350 |
 
 **Best bet:** Batroun Drop - 19.0 nm bearing 354 (N). Surface busts common on calm dawns; keep poppers ready when bait sprays.
 
